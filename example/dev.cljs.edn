@@ -1,0 +1,5 @@
+^{:watch-dirs ["example/test" "example/src"]
+  :css-dirs ["example/resources/public/css"]
+  :auto-testing true}
+{:main example.core
+ :devcards true}

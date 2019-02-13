@@ -104,3 +104,10 @@
 ;; compare-images: expected/actual pair
 
 ;; function to replace all the expecteds with current version
+
+;; non-devcards list of things
+;; a non-figwheel API where you provide a list of urls or a callback to discover them,
+;; a way to name them or a callback to provide the reference image.
+
+;; for use in selenium etc tests, so you can drive through the app and make UI assertions at any point
+;; a single call where you provide a url and a reference image
