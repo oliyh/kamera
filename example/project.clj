@@ -8,7 +8,8 @@
 
   :dependencies [[org.clojure/clojure "1.9.0"]
                  [org.clojure/clojurescript "1.10.339"]
-                 [reagent "0.8.1"]]
+                 [reagent "0.8.1"]
+                 [devcards "0.2.6"]]
 
   :source-paths ["src"]
 
@@ -20,4 +21,3 @@
   :profiles {:dev {:dependencies [[com.bhauman/figwheel-main "0.1.9"]
                                   [com.bhauman/rebel-readline-cljs "0.1.4"]]
                    }})
-

@@ -2,7 +2,8 @@
   (:require [me.raynes.conch.low-level :as sh]
             [clojure.java.io :as io]
             [clojure.test :refer [testing is]]
-            [figwheel.main.api :as fig-api])
+            [figwheel.main.api :as fig-api]
+            [doo-chrome-devprotocol.core :as dcd])
   (:import [io.webfolder.cdp.session Session]
            [java.util.function Predicate]
            [java.io File]))
@@ -11,16 +12,18 @@
                       ^File actual
                       ^File difference
                       {:keys [path-to-imagemagick
+                              imagemagick-args
                               imagemagick-timeout]}]
   (merge
    {:error 1
     :expected (.getAbsolutePath expected)
     :actual (.getAbsolutePath actual)}
-   (let [args [path-to-imagemagick
-               "compare" "-verbose" "-metric" "mae" "-compose" "src"
-               (.getAbsolutePath expected)
-               (.getAbsolutePath actual)
-               (.getAbsolutePath difference)]
+   (let [args (reduce into
+                     [path-to-imagemagick]
+                     [imagemagick-args
+                      [(.getAbsolutePath expected)
+                       (.getAbsolutePath actual)
+                       (.getAbsolutePath difference)]])
          process (apply sh/proc args)
          stdout (sh/stream-to-string process :out)
          stderr (sh/stream-to-string process :err)
@@ -32,74 +35,78 @@
 
      (when-not (zero? exit-code)
        (println (format "Error comparing images - ImageMagick exited with code %s \n stdout: %s \n stderr: %s"
-                        stdout stderr)))
+                        exit-code stdout stderr)))
 
      {:error mean-absolute-error
       :difference (.getAbsolutePath difference)})))
 
-(defn- take-screenshot [^Session session file-name {:keys [screenshot-directory]}]
+(defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory] :as target} opts]
   (let [data (.captureScreenshot session)
-        file (io/file screenshot-directory (str file-name "-actual.png"))]
+        file (io/file screenshot-directory reference-file)]
     (if data
       (do (io/make-parents file)
           (doto (io/output-stream file)
             (.write data)
             (.close))
           file)
-      (println "Got no data from the screenshot for" file-name))))
+      (println "Got no data from the screenshot for" reference-file))))
 
-(defn- screenshot-devcards [^Session session test-ns {:keys [devcards-root devcards-load-timeout] :as opts}]
+(defn- screenshot-target [^Session session {:keys [root url load-timeout] :as target} opts]
   (.navigate session "about:blank") ;; solves a weird bug navigating directly between fragment urls, i think
-  (.waitDocumentReady session 1000)
+  (.waitDocumentReady session (int 1000))
 
-  (.navigate session (str devcards-root "#/" test-ns))
-  (.waitDocumentReady devcards-load-timeout)
+  (.navigate session (str root url))
+  (.waitDocumentReady session (int load-timeout))
 
+  ;; hmm, this might need to be part of the target as well
   (.waitUntil session (reify Predicate
                         (test [this session]
                           (.matches ^Session session "#com-rigsomelight-devcards-main"))))
 
   (Thread/sleep 500) ;; give devcards a chance to render
 
-  (take-screenshot session test-ns opts))
+  (take-screenshot session target opts))
 
-(defn test-ns [session test-ns {:keys [reference-directory screenshot-directory error-threshold] :as opts}]
-  (testing test-ns
-    (let [expected (io/file reference-directory (str test-ns "-expected.png"))
-          actual (screenshot-devcards session test-ns opts)
-          difference (io/file screenshot-directory (str test-ns "-difference.png"))
-          {:keys [error] :as report} (compare-images expected actual difference)]
+(defn test-target [session {:keys [root url reference-directory reference-file screenshot-directory error-threshold] :as target} opts]
+  (testing url
+    (let [expected (io/file reference-directory reference-file)
+          actual (screenshot-target session target opts)
+          difference (io/file screenshot-directory (str reference-file "-difference.png"))
+          {:keys [error] :as report} (compare-images expected actual difference opts)]
 
       (is (< error error-threshold)
           (format "%s has diverged from reference by %s, please compare \nExpected: %s \nActual: %s \nDifference: %s"
-                  test-ns error (:expected report) (:actual report) (:difference report))))))
+                  reference-file error (:expected report) (:actual report) (:difference report))))))
 
 (def default-opts
-  {:path-to-imagemagick "imagemagick"
+  {:path-to-imagemagick "compare"
+   :imagemagick-args ["-verbose" "-metric" "mae" "-compose" "src"]
    :imagemagick-timeout 2000
-   :devcards-root "http://localhost:9500/cards.html" ;; todo can get this out of figwheel?
-   :devcards-load-timeout 60000
-   :screenshot-directory "target/kamera"
-   :reference-directory "test-resources/kamera"
-   :error-threshold 0.001})
+   :default-target {:root "http://localhost:9500/devcards.html"
+                    ;; :url must be supplied on each target
+                    ;; :reference-file must be supplied on each target
+                    :error-threshold 0.01
+                    :load-timeout 60000
+                    :reference-directory "test-resources/kamera"
+                    :screenshot-directory "target/kamera"}})
 
-(defn run-tests [build-id opts]
-  (fig-api/start build-id)
 
-  (let [session nil] ;; todo start a doo-chrome-devprotocol session
-    (doseq [ns []] ;; todo work out how to collect the test namespaces that have devcards (or scrape them from the devcards ui?)
-      (test-ns session ns opts))
+;; this is the general usecase of there is a website, i want to visit these links and do the comparison
+;; could provide a callback to dynamically find the urls, references etc
 
-    ;; todo stop chrome session
-    )
-
-  (fig-api/stop build-id))
+(defn run-tests
+  ([targets opts]
+   (dcd/with-chrome-session
+     opts
+     (fn [session opts]
+       (run-tests session targets opts))))
+  ([^Session session targets opts]
+   (let [default-target (:default-target opts)]
+     (doseq [target targets]
+       (test-target session (merge default-target target) opts)))))
 
 ;; API
 ;; test: figwheel build-id
-;;   work out how to start figwheel, launch chrome, discover devcards test-namespaces, screenshot each one, compare images, shut it all down
-;;   need directory to store difference (otherwise target)
-;;   threshold for failure
 
 ;; compare-images: expected/actual pair
 
