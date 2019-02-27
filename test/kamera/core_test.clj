@@ -1,51 +1,73 @@
 (ns kamera.core-test
   (:require [clojure.test :refer :all]
             [clojure.java.io :as io]
-            [kamera.core :refer [compare-images default-opts]]))
+            [kamera.core :refer [compare-images dimensions default-opts]]))
 
 (deftest image-comparison-test
   (testing "can compare identical images"
-    (is (= {:metric     0
-            :expected   "/home/oliy/dev/kamera/test-resources/a.png"
-            :actual     "/home/oliy/dev/kamera/test-resources/a.png"
-            :difference "/home/oliy/dev/kamera/target/a_a.png"}
+    (let [expected (io/file "test-resources/a.png")
+          diff (io/file "target/a_a.png")]
+      (is (= {:metric     0
+              :expected   (.getAbsolutePath expected)
+              :actual     (.getAbsolutePath expected)
+              :difference (.getAbsolutePath diff)}
 
-           (compare-images (io/file "test-resources/a.png")
-                           (io/file "test-resources/a.png")
-                           (io/file "target/a_a.png")
-                           default-opts))))
+             (compare-images expected
+                             expected
+                             diff
+                             default-opts)))))
 
   (testing "can compare different images that have the same dimensions"
-    (is (= {:metric     4.84915E-4
-            :expected   "/home/oliy/dev/kamera/test-resources/a.png"
-            :actual     "/home/oliy/dev/kamera/test-resources/b.png"
-            :difference "/home/oliy/dev/kamera/target/a_b.png"}
+    (let [expected (io/file "test-resources/a.png")
+          actual (io/file "test-resources/b.png")
+          diff (io/file "target/a_b.png")]
+      (is (= {:metric     4.84915E-4
+              :expected   (.getAbsolutePath expected)
+              :actual     (.getAbsolutePath actual)
+              :difference (.getAbsolutePath diff)}
 
-           (compare-images (io/file "test-resources/a.png")
-                           (io/file "test-resources/b.png")
-                           (io/file "target/a_b.png")
-                           default-opts))))
+             (compare-images expected
+                             actual
+                             diff
+                             default-opts)))))
 
-  #_(testing "can compare different images that have different dimensions"
-    (is (= {:metric     4.84915E-4
-            :expected   "/home/oliy/dev/kamera/test-resources/a.png"
-            :actual     "/home/oliy/dev/kamera/test-resources/c.png"
-            :difference "/home/oliy/dev/kamera/target/a_c.png"}
+  (testing "can compare different images that have different dimensions"
+    (testing "when actual is bigger than expected"
+      (let [expected (io/file "test-resources/c.png")
+            actual (io/file "test-resources/a.png")
+            diff (io/file "target/c_a.png")
+            [expected-width expected-height] (dimensions expected default-opts)
+            [actual-width actual-height] (dimensions actual default-opts)]
 
-           (compare-images (io/file "test-resources/a.png")
-                           (io/file "test-resources/c.png")
-                           (io/file "target/a_c.png")
-                           default-opts))))
+        (is (< expected-width actual-width))
+        (is (< expected-height actual-height))
+
+        (is (= {:metric     0
+                :expected   (.getAbsolutePath expected)
+                :actual     (.getAbsolutePath actual)
+                :difference (.getAbsolutePath diff)}
+
+               (compare-images expected
+                               actual
+                               diff
+                               default-opts))))))
 
   (testing "fails when an image doesn't exist"
-    (let [result (compare-images (io/file "test-resources/a.png")
-                                   (io/file "test-resources/non-existent.png")
-                                   (io/file "target/a_non-existent.png")
-                                   default-opts)]
-      (is (= {:expected   "/home/oliy/dev/kamera/test-resources/a.png"
-              :actual     "/home/oliy/dev/kamera/test-resources/non-existent.png"
+    (let [expected (io/file "test-resources/a.png")
+          actual (io/file "test-resources/non-existent.png")
+          diff (io/file "target/a_non-existent.png")
+          result (compare-images expected
+                                 actual
+                                 diff
+                                 default-opts)]
+      (is (= {:expected   (.getAbsolutePath expected)
+              :actual     (.getAbsolutePath actual)
               :metric 1}
 
              (dissoc result :errors)))
 
       (is (:errors result)))))
+
+(deftest dimensions-test
+  (is (= [800 840]
+         (dimensions (io/file "test-resources/c.png") default-opts))))

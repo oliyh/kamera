@@ -3,15 +3,16 @@
             [clojure.java.io :as io]
             [clojure.test :refer [testing is]]
             [figwheel.main.api :as fig-api]
-            [doo-chrome-devprotocol.core :as dcd])
+            [doo-chrome-devprotocol.core :as dcd]
+            [clojure.string :as string])
   (:import [io.webfolder.cdp.session Session]
            [java.util.function Predicate]
            [java.io File]))
 
-(defn- magick [{:keys [path-to-imagemagick
-                       imagemagick-timeout]}
-               operation
-               operation-args]
+(defn- magick [operation
+               operation-args
+               {:keys [path-to-imagemagick
+                       imagemagick-timeout]}]
   (let [executable (or (when path-to-imagemagick
                          (.getAbsolutePath (let [f (io/file path-to-imagemagick)]
                                              (if (.isDirectory f)
@@ -24,10 +25,37 @@
      :stderr (sh/stream-to-string process :err)
      :exit-code (sh/exit-code process imagemagick-timeout)}))
 
-#_(defn- normalise-images [^File expected ^File actual {:keys [path-to-imagemagick
-                                                             imagemagick-args
-                                                             imagemagick-timeout]}]
-  (let [args ]))
+(defn dimensions [^File image opts]
+  (let [{:keys [stdout exit-code]} (magick "convert"
+                                           [(.getAbsolutePath image)
+                                            "-ping"
+                                            "-format"
+                                            "%w:%h"
+                                            "info:"]
+                                           opts)]
+    (when (zero? exit-code)
+      (mapv #(Long/parseLong %) (string/split stdout #":")))))
+
+(defn- append-suffix [^File file suffix]
+  (let [dir (.getParent file)
+        file-name (.getName file)]
+    (io/file dir (string/replace file-name #"\.(\w+)$" (str suffix ".$1")))))
+
+(defn- normalise-actual [^File expected ^File actual opts]
+  (let [[width height :as expected-dimensions] (dimensions expected opts)
+        actual-dimensions (dimensions actual opts)]
+    (if (and expected-dimensions
+             actual-dimensions
+             (not= expected-dimensions actual-dimensions))
+      (let [actual-cropped (append-suffix actual "-cropped")]
+        (magick "convert"
+                [(.getAbsolutePath actual)
+                 "-crop"
+                 (format "%sx%s+0+0" width height)
+                 (.getAbsolutePath actual-cropped)]
+                opts)
+        actual-cropped)
+      actual)))
 
 (defn compare-images [^File expected
                       ^File actual
@@ -37,11 +65,14 @@
    {:metric 1
     :expected (.getAbsolutePath expected)
     :actual (.getAbsolutePath actual)}
-   (let [{:keys [stdout stderr exit-code]}
-         (magick opts "compare" ["-verbose" "-metric" "mae" "-compose" "src"
-                                 (.getAbsolutePath expected)
-                                 (.getAbsolutePath actual)
-                                 (.getAbsolutePath difference)])
+   (let [actual (normalise-actual expected actual opts)
+         {:keys [stdout stderr exit-code]}
+         (magick "compare"
+                 ["-verbose" "-metric" "mae" "-compose" "src"
+                  (.getAbsolutePath expected)
+                  (.getAbsolutePath actual)
+                  (.getAbsolutePath difference)]
+                 opts)
          mean-absolute-error (when-let [e (last (re-find #"all: .* \((.*)\)" stderr))]
                                (read-string e))]
 
