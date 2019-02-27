@@ -8,37 +8,53 @@
            [java.util.function Predicate]
            [java.io File]))
 
+(defn- magick [{:keys [path-to-imagemagick
+                       imagemagick-timeout]}
+               operation
+               operation-args]
+  (let [executable (or (when path-to-imagemagick
+                         (.getAbsolutePath (let [f (io/file path-to-imagemagick)]
+                                             (if (.isDirectory f)
+                                               (io/file f operation)
+                                               f))))
+                       operation)
+        args (cons executable operation-args)
+        process (apply sh/proc args)]
+    {:stdout (sh/stream-to-string process :out)
+     :stderr (sh/stream-to-string process :err)
+     :exit-code (sh/exit-code process imagemagick-timeout)}))
+
+#_(defn- normalise-images [^File expected ^File actual {:keys [path-to-imagemagick
+                                                             imagemagick-args
+                                                             imagemagick-timeout]}]
+  (let [args ]))
+
 (defn compare-images [^File expected
                       ^File actual
                       ^File difference
-                      {:keys [path-to-imagemagick
-                              imagemagick-args
-                              imagemagick-timeout]}]
+                      opts]
   (merge
-   {:error 1
+   {:metric 1
     :expected (.getAbsolutePath expected)
     :actual (.getAbsolutePath actual)}
-   (let [args (reduce into
-                     [path-to-imagemagick]
-                     [imagemagick-args
-                      [(.getAbsolutePath expected)
-                       (.getAbsolutePath actual)
-                       (.getAbsolutePath difference)]])
-         process (apply sh/proc args)
-         stdout (sh/stream-to-string process :out)
-         stderr (sh/stream-to-string process :err)
-         mean-absolute-error (if-let [e (last (re-find #"all: .* \((.*)\)" stderr))]
-                               (read-string e)
-                               (do (println (format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
-                                                    stdout stderr))))
-         exit-code (sh/exit-code process imagemagick-timeout)]
+   (let [{:keys [stdout stderr exit-code]}
+         (magick opts "compare" ["-verbose" "-metric" "mae" "-compose" "src"
+                                 (.getAbsolutePath expected)
+                                 (.getAbsolutePath actual)
+                                 (.getAbsolutePath difference)])
+         mean-absolute-error (when-let [e (last (re-find #"all: .* \((.*)\)" stderr))]
+                               (read-string e))]
 
-     (when-not (zero? exit-code)
-       (println (format "Error comparing images - ImageMagick exited with code %s \n stdout: %s \n stderr: %s"
-                        exit-code stdout stderr)))
+     (merge-with concat
+      (if (not= 2 exit-code)
+        {:difference (.getAbsolutePath difference)}
+        {:errors [(format "Error comparing images - ImageMagick exited with code %s \n stdout: %s \n stderr: %s"
+                          exit-code stdout stderr)]})
 
-     {:error mean-absolute-error
-      :difference (.getAbsolutePath difference)})))
+      (if mean-absolute-error
+        {:metric mean-absolute-error}
+        {:errors [(format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
+                           stdout stderr)]})))))
 
 (defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory] :as target} opts]
   (let [data (.captureScreenshot session)
@@ -67,29 +83,33 @@
 
   (take-screenshot session target opts))
 
-(defn test-target [session {:keys [root url reference-directory reference-file screenshot-directory error-threshold] :as target} opts]
+(defn test-target [session {:keys [root url reference-directory reference-file screenshot-directory metric-threshold] :as target} opts]
   (testing url
     (let [expected (io/file reference-directory reference-file)
           actual (screenshot-target session target opts)
           difference (io/file screenshot-directory (str reference-file "-difference.png"))
-          {:keys [error] :as report} (compare-images expected actual difference opts)]
+          {:keys [metric errors] :as report} (compare-images expected actual difference opts)]
 
-      (is (< error error-threshold)
+      (when (not-empty errors)
+        (println (format "Errors occurred testing %s:" url))
+        (doseq [error errors]
+          (println error)))
+
+      (is (< metric metric-threshold)
           (format "%s has diverged from reference by %s, please compare \nExpected: %s \nActual: %s \nDifference: %s"
-                  reference-file error (:expected report) (:actual report) (:difference report))))))
+                  reference-file metric (:expected report) (:actual report) (:difference report))))))
 
 (def default-opts
-  {:path-to-imagemagick "compare"
+  {:path-to-imagemagick nil ;; directory where binaries reside on linux, or executable on windows
    :imagemagick-args ["-verbose" "-metric" "mae" "-compose" "src"]
    :imagemagick-timeout 2000
    :default-target {:root "http://localhost:9500/devcards.html"
                     ;; :url must be supplied on each target
                     ;; :reference-file must be supplied on each target
-                    :error-threshold 0.01
+                    :metric-threshold 0.01
                     :load-timeout 60000
                     :reference-directory "test-resources/kamera"
                     :screenshot-directory "target/kamera"}})
-
 
 ;; this is the general usecase of there is a website, i want to visit these links and do the comparison
 ;; could provide a callback to dynamically find the urls, references etc
@@ -118,3 +138,11 @@
 
 ;; for use in selenium etc tests, so you can drive through the app and make UI assertions at any point
 ;; a single call where you provide a url and a reference image
+
+;; could let user choose the metric too
+
+;; need to deal with files of different sizes
+;; -subimage-search is really slow
+;; cropping would be faster
+;; as would scaling
+;; probably these should be options for the user as well.
