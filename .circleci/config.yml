@@ -1,0 +1,8 @@
+version: 2
+jobs:
+  build:
+    docker:
+      - image: circleci/clojure:lein-2.9.0-browsers
+    steps:
+      - checkout
+      - run: lein test

@@ -7,6 +7,7 @@
         opts (-> kf/default-opts
                  (update :default-target merge {:reference-directory "example/test-resources/kamera"
                                                 :screenshot-directory "example/target/kamera"})
-                 (assoc-in [:chrome-options :chrome-args] []))]
+                 ;;(assoc-in [:chrome-options :chrome-args] [])
+                 )]
 
     (kf/test-devcards build-id opts)))
