@@ -36,26 +36,33 @@
     (when (zero? exit-code)
       (mapv #(Long/parseLong %) (string/split stdout #":")))))
 
-(defn- append-suffix [^File file suffix]
+(defn append-suffix [^File file suffix]
   (let [dir (.getParent file)
         file-name (.getName file)]
     (io/file dir (string/replace file-name #"\.(\w+)$" (str suffix ".$1")))))
 
-(defn- normalise-actual [^File expected ^File actual opts]
-  (let [[width height :as expected-dimensions] (dimensions expected opts)
-        actual-dimensions (dimensions actual opts)]
-    (if (and expected-dimensions
-             actual-dimensions
-             (not= expected-dimensions actual-dimensions))
-      (let [actual-cropped (append-suffix actual "-cropped")]
-        (magick "convert"
-                [(.getAbsolutePath actual)
-                 "-crop"
-                 (format "%sx%s+0+0" width height)
-                 (.getAbsolutePath actual-cropped)]
-                opts)
-        actual-cropped)
-      actual)))
+(defn- normalise-images [^File a ^File b opts]
+  (let [a-dimensions (dimensions a opts)
+        b-dimensions (dimensions b opts)]
+    (if (and a-dimensions b-dimensions
+             (not= a-dimensions b-dimensions))
+      (let [[target-width target-height] [(apply min (map first [a-dimensions b-dimensions]))
+                                          (apply min (map second [a-dimensions b-dimensions]))]]
+        (mapv (fn [[file [width height]]]
+                (if (or (< target-width width)
+                        (< target-height height))
+                  (let [cropped (append-suffix file "-cropped")]
+                    (magick "convert"
+                            [(.getAbsolutePath file)
+                             "-crop"
+                             (format "%sx%s+0+0" target-width target-height)
+                             (.getAbsolutePath cropped)]
+                            opts)
+                    cropped)
+                  file))
+              [[a a-dimensions]
+               [b b-dimensions]]))
+      [a b])))
 
 (defn compare-images [^File expected
                       ^File actual
@@ -65,27 +72,33 @@
    {:metric 1
     :expected (.getAbsolutePath expected)
     :actual (.getAbsolutePath actual)}
-   (let [actual (normalise-actual expected actual opts)
+   (let [[expected-n actual-n] (normalise-images expected actual opts)
          {:keys [stdout stderr exit-code]}
          (magick "compare"
                  ["-verbose" "-metric" "mae" "-compose" "src"
-                  (.getAbsolutePath expected)
-                  (.getAbsolutePath actual)
+                  (.getAbsolutePath expected-n)
+                  (.getAbsolutePath actual-n)
                   (.getAbsolutePath difference)]
                  opts)
          mean-absolute-error (when-let [e (last (re-find #"all: .* \((.*)\)" stderr))]
                                (read-string e))]
 
      (merge-with concat
-      (if (not= 2 exit-code)
-        {:difference (.getAbsolutePath difference)}
-        {:errors [(format "Error comparing images - ImageMagick exited with code %s \n stdout: %s \n stderr: %s"
-                          exit-code stdout stderr)]})
+                 (when (not= actual actual-n)
+                   {:actual-normalised (.getAbsolutePath actual-n)})
 
-      (if mean-absolute-error
-        {:metric mean-absolute-error}
-        {:errors [(format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
-                           stdout stderr)]})))))
+                 (when (not= expected expected-n)
+                   {:expected-normalised (.getAbsolutePath expected-n)})
+
+                 (if (not= 2 exit-code)
+                   {:difference (.getAbsolutePath difference)}
+                   {:errors [(format "Error comparing images - ImageMagick exited with code %s \n stdout: %s \n stderr: %s"
+                                     exit-code stdout stderr)]})
+
+                 (if mean-absolute-error
+                   {:metric mean-absolute-error}
+                   {:errors [(format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
+                                     stdout stderr)]})))))
 
 (defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory] :as target} opts]
   (let [data (.captureScreenshot session)

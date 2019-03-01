@@ -9,4 +9,4 @@ pom.xml.asc
 /.nrepl-port
 .hgignore
 .hg/
-/test-resources/a-cropped.png
+/test-resources/*-cropped.png

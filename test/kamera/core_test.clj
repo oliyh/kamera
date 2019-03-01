@@ -1,7 +1,7 @@
 (ns kamera.core-test
   (:require [clojure.test :refer :all]
             [clojure.java.io :as io]
-            [kamera.core :refer [compare-images dimensions default-opts]]))
+            [kamera.core :refer [compare-images dimensions default-opts append-suffix]]))
 
 (deftest image-comparison-test
   (testing "can compare identical images"
@@ -42,10 +42,32 @@
         (is (< expected-width actual-width))
         (is (< expected-height actual-height))
 
-        (is (= {:metric     0
-                :expected   (.getAbsolutePath expected)
-                :actual     (.getAbsolutePath actual)
-                :difference (.getAbsolutePath diff)}
+        (is (= {:metric              0
+                :expected            (.getAbsolutePath expected)
+                :actual              (.getAbsolutePath actual)
+                :actual-normalised   (.getAbsolutePath (append-suffix actual "-cropped"))
+                :difference          (.getAbsolutePath diff)}
+
+               (compare-images expected
+                               actual
+                               diff
+                               default-opts)))))
+
+    (testing "when expected is bigger than actual"
+      (let [expected (io/file "test-resources/a.png")
+            actual (io/file "test-resources/c.png")
+            diff (io/file "target/a_c.png")
+            [expected-width expected-height] (dimensions expected default-opts)
+            [actual-width actual-height] (dimensions actual default-opts)]
+
+        (is (< actual-width expected-width))
+        (is (< actual-height expected-height))
+
+        (is (= {:metric              0
+                :expected            (.getAbsolutePath expected)
+                :expected-normalised (.getAbsolutePath (append-suffix expected "-cropped"))
+                :actual              (.getAbsolutePath actual)
+                :difference          (.getAbsolutePath diff)}
 
                (compare-images expected
                                actual
