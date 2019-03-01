@@ -31,6 +31,6 @@ jobs:
       - save_cache:
           paths:
             - ~/.m2
-            key: v1-dependencies-{{ checksum "project.clj" }}
+          key: v1-dependencies-{{ checksum "project.clj" }}
 
       - run: lein test
