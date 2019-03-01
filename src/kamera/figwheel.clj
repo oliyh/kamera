@@ -44,7 +44,7 @@
 
 (def default-opts
   (assoc k/default-opts
-         :devcards-path "/devcards.html"
+         :devcards-path "devcards.html"
          :chrome-options dcd/default-options))
 
 (defn test-devcards

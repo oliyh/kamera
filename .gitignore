@@ -11,3 +11,5 @@ pom.xml.asc
 .hg/
 /test-resources/*-cropped.png
 /example/test-resources/kamera/*-cropped.png
+/example/.lein-*
+/example/resources/public/cljs-out

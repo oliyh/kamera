@@ -41,3 +41,9 @@ jobs:
           key: v1-dependencies-{{ checksum "project.clj" }}
 
       - run: lein test
+
+      - run: lein install
+
+      - run: cd example
+
+      - run: lein test

@@ -1,5 +1,5 @@
-^{:watch-dirs ["example/test" "example/src"]
-  :css-dirs ["example/resources/public/css"]
+^{:watch-dirs ["test" "src"]
+  :css-dirs ["resources/public/css"]
   :auto-testing true
   :extra-main-files {:devcards {:main example.devcards}}}
 {:main example.core
