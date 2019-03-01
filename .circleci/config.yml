@@ -19,6 +19,13 @@ jobs:
     steps:
       - checkout
 
+      - run:
+          name: Install imagemagick
+          command: |
+            sudo apt-get -y install imagemagick
+
+      - run: compare --version
+
       # Download and cache dependencies
       - restore_cache:
           keys:
