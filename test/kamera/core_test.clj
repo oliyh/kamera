@@ -1,5 +1,5 @@
 (ns kamera.core-test
-  (:require [clojure.test :refer :all]
+  (:require [clojure.test :refer [deftest testing is]]
             [clojure.java.io :as io]
             [kamera.core :refer [compare-images dimensions default-opts append-suffix]]))
 

@@ -10,3 +10,4 @@ pom.xml.asc
 .hgignore
 .hg/
 /test-resources/*-cropped.png
+/example/test-resources/kamera/*-cropped.png

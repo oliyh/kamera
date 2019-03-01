@@ -9,10 +9,10 @@
             [clojure.test :refer [deftest]])
   (:import [io.webfolder.cdp.session Session]))
 
-(defn start-devcards [build-id]
+(defn start-devcards [build-id {:keys [devcards-path]}]
   (fig-api/start {:mode :serve
                   :open-url false
-                  :connect-url "http://[[config-hostname]]:[[server-port]]/devcards.html"}
+                  :connect-url (format "http://[[config-hostname]]:[[server-port]]/%s" devcards-path)}
                  build-id)
   ;; looks like you have to look at the websocket url to know what the port and hostname are going to be, bit rubbish
   (let [config (fig/config-for-id build-id)]
@@ -42,36 +42,38 @@
         html (.getOuterHTML dom (.getNodeId root-node) nil nil)]
     (extract-links html)))
 
+(def default-opts
+  (assoc k/default-opts
+         :devcards-path "/devcards.html"
+         :chrome-options dcd/default-options))
 
-(deftest go
-  (let [build-id "example/dev"]
-    (dcd/with-chrome-session (assoc dcd/default-options :chrome-args [])
-      (fn [session opts]
-        (let [url (kamera.figwheel/start-devcards build-id)]
-          (try
-            (.navigate session url)
-            (.waitDocumentReady session 15000)
-            (Thread/sleep 2000)
-            (let [target-urls (kamera.figwheel/find-test-urls session)]
-              (k/run-tests
-               session
-               (map (fn [target-url]
-                      {:url target-url
-                       :reference-file (str (subs target-url 3) ".png")})
-                    target-urls)
-               (-> k/default-opts
-                   (update :default-target merge {:root url
-                                                  :reference-directory "example/test-resources/kamera"
-                                                  :screenshot-directory "example/target/kamera"})))
-              (println "Finished run tests"))
+(defn test-devcards
+  ([build-id] (test-devcards build-id default-opts))
 
-            (finally
-              (kamera.figwheel/stop-devcards build-id))))))))
+  ([build-id opts]
+   (dcd/with-chrome-session (:chrome-options opts)
+     (fn [session _]
+       (test-devcards session build-id opts))))
 
+  ([^Session session build-id opts]
+   (let [devcards-url (start-devcards build-id opts)]
+     (try
+       (test-devcards devcards-url session build-id opts)
+       (finally
+         (stop-devcards build-id)))))
 
-(comment
-  (fig-api/start {:mode :serve :open-url false} "example/dev")
-  (fig-api/stop "example/dev"))
+  ([devcards-url ^Session session build-id opts]
+   (.navigate session devcards-url)
+   (.waitDocumentReady session 15000)
+   (Thread/sleep 2000)
+   (let [target-urls (find-test-urls session)]
+     (k/run-tests
+      session
+      (map (fn [target-url]
+             {:url target-url
+              :reference-file (str (subs target-url 3) ".png")})
+           target-urls)
+      (-> opts
+          (update :default-target assoc :root devcards-url))))))
 
-;; also have an api where you start the build and provide the figwheel url etc, because they may not use the edn files.
 ;; maybe it's possible to get chrome to execute a script that calls fighwheel in cljs to get a list of test namespaces rather than scraping?
