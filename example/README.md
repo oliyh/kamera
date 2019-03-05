@@ -1,12 +1,10 @@
 # example
 
-FIXME: Write a one-line description of your library/project.
-
-## Overview
-
-FIXME: Write a paragraph about the library/project and highlight its goals.
+An example project demonstrating the use of [kamera](https://github.com/oliyh/kamera).
 
 ## Development
+
+`cider-jack-in-clojurescript` and select `figwheel-main` and `dev`.
 
 To get an interactive development environment run:
 
@@ -29,9 +27,8 @@ To create a production build run:
 	lein clean
 	lein fig:min
 
-
 ## License
 
-Copyright © 2018 FIXME
+Copyright © 2018 oliyh
 
 Distributed under the Eclipse Public License either version 1.0 or (at your option) any later version.

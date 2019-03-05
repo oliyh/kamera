@@ -24,9 +24,9 @@ See the [example project](https://github.com/oliyh/kamera/tree/master/example) f
 If you have a figwheel-main build called "dev" which has devcards enabled and a page served from /devcards.html then you
 can test your devcards as simply as this:
 
-### Reference images
+### Devcards (actual)
 
-Given the following devcards test files:
+The following devcards test files:
 
 ```bash
 test
@@ -37,8 +37,11 @@ test
     └── test_runner.cljs       # runs unit tests
 ```
 
-... and a directory populated with reference images like this:
-(you can generate these images initially by running kamera and copying the "actual" files from the screenshot directory)
+will have screenshots taken to produce 'actual' images called `example.core_test.png`, `example.another_core_test.png`.
+
+### References (expected)
+
+A directory populated with reference images, named in the same way, provides the 'expected' screenshots:
 
 ```
 test-resources
@@ -47,7 +50,12 @@ test-resources
     └── example.core_test.png
 ```
 
-You can run the following code to compare all the images:
+_(You can generate these images initially by running kamera and copying the 'actual' files from the screenshot directory)_
+
+### Run the test
+
+The following code will start the figwheel build called `dev`, launch Chrome, take screenshots of all the devcards
+and compare the actual with the expected, failing if the difference is above a certain threshold.
 
 ```clojure
 (ns example.devcards-test
@@ -57,15 +65,33 @@ You can run the following code to compare all the images:
 (deftest devcards-test
   (let [build-id "dev"
         opts (-> kf/default-opts
-                 (update :default-target merge {:reference-directory "/test-resources/kamera"
-                                                :screenshot-directory "/target/kamera"}))]
+                 (update :default-target merge {:reference-directory "test-resources/kamera"
+                                                :screenshot-directory "target/kamera"}))]
 
     (kf/test-devcards build-id opts)))
 ```
 
 The output will look something like this:
 
+```clojure
+TODO test output goes here
+```
 
+TODO expected, actual, difference images go here - need to make this example really good
+
+## Options
+
+```clojure
+{:path-to-imagemagick nil                        ;; directory where binaries reside on linux, or executable on windows
+ :imagemagick-timeout 2000                       ;; die if any imagemagick operation takes longer than this, in ms
+ :default-target                                 ;; default options for each image comparison
+   {:root "http://localhost:9500/devcards.html"  ;; the common root url where all targets can be found
+    :metric-threshold 0.01                       ;; difference metric above which comparison fails
+    :load-timeout 60000                          ;; max time in ms to wait for target url to load
+    :reference-directory "test-resources/kamera" ;; directory where reference images are store
+    :screenshot-directory "target/kamera"}       ;; diredtory where screenshots and diffs should be saved
+ :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc
+```
 
 ## Development
 

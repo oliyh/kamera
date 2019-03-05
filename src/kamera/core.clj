@@ -145,7 +145,6 @@
 
 (def default-opts
   {:path-to-imagemagick nil ;; directory where binaries reside on linux, or executable on windows
-   :imagemagick-args ["-verbose" "-metric" "mae" "-compose" "src"]
    :imagemagick-timeout 2000
    :default-target {:root "http://localhost:9500/devcards.html"
                     ;; :url must be supplied on each target
@@ -153,7 +152,8 @@
                     :metric-threshold 0.01
                     :load-timeout 60000
                     :reference-directory "test-resources/kamera"
-                    :screenshot-directory "target/kamera"}})
+                    :screenshot-directory "target/kamera"}
+   :chrome-options dcd/default-options})
 
 ;; this is the general usecase of there is a website, i want to visit these links and do the comparison
 ;; could provide a callback to dynamically find the urls, references etc
@@ -161,8 +161,8 @@
 (defn run-tests
   ([targets opts]
    (dcd/with-chrome-session
-     opts
-     (fn [session opts]
+     (:chrome-options opts)
+     (fn [session _]
        (run-tests session targets opts))))
   ([^Session session targets opts]
    (let [default-target (:default-target opts)]
