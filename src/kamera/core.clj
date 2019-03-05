@@ -131,7 +131,7 @@
   (testing url
     (let [expected (io/file reference-directory reference-file)
           actual (screenshot-target session target opts)
-          difference (io/file screenshot-directory (str reference-file "-difference.png"))
+          difference (io/file screenshot-directory (append-suffix expected "-difference"))
           {:keys [metric errors] :as report} (compare-images expected actual difference opts)]
 
       (when (not-empty errors)

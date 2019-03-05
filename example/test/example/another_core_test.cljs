@@ -5,4 +5,4 @@
      [devcards.core :refer-macros [defcard-rg]]))
 
 (defcard-rg another-hello-user-test
-  [hello-user "Figwheel"])
+  [hello-user true])

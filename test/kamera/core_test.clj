@@ -93,3 +93,7 @@
 (deftest dimensions-test
   (is (= [800 840]
          (dimensions (io/file "test-resources/c.png") default-opts))))
+
+(deftest append-suffix-test
+  (is (= "baz.foo_bar.c-diff.png"
+         (.getName (append-suffix (io/file "baz.foo_bar.c.png") "-diff")))))

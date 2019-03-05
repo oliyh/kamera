@@ -50,6 +50,9 @@ test-resources
     └── example.core_test.png
 ```
 
+![](example/test-resources/kamera/example.another_core_test.png?raw=true)
+![](example/test-resources/kamera/example.core_test.png?raw=true)
+
 _(You can generate these images initially by running kamera and copying the 'actual' files from the screenshot directory)_
 
 ### Run the test
@@ -74,10 +77,25 @@ and compare the actual with the expected, failing if the difference is above a c
 The output will look something like this:
 
 ```clojure
-TODO test output goes here
+Results
+
+example.kamera-test
+1 non-passing tests:
+
+Fail in devcards-test
+#!/example.another_core_test
+example.another_core_test.png has diverged from reference by 0.020624, please compare
+Expected: test-resources/kamera/example.another_core_test.png
+Actual: target/kamera/example.another_core_test.png
+Difference: target/kamera/example.another_core_test-difference.png
+expected: (< metric metric-threshold)
+
+  actual: (not (< 0.020624 0.01))
 ```
 
-TODO expected, actual, difference images go here - need to make this example really good
+![](doc/example.another_core_test.png?raw=true)
+![](doc/example.another_core_test-difference.png?raw=true)
+![](doc/example.core_test.png?raw=true)
 
 ## Options
 

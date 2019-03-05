@@ -5,4 +5,4 @@
      [devcards.core :refer-macros [defcard-rg]]))
 
 (defcard-rg hello-user-test
-  [hello-user "Kamera"])
+  [hello-user false])
