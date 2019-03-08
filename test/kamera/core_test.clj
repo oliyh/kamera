@@ -9,7 +9,7 @@
       (is (= {:metric     0
               :expected   (.getAbsolutePath expected)
               :actual     (.getAbsolutePath expected)
-              :difference (.getAbsolutePath (io/file "target/a-difference.png"))}
+              :difference (.getAbsolutePath (io/file "target/a.difference.png"))}
 
              (compare-images expected
                              expected
@@ -22,7 +22,7 @@
       (is (= {:metric     4.84915E-4
               :expected   (.getAbsolutePath expected)
               :actual     (.getAbsolutePath actual)
-              :difference (.getAbsolutePath (io/file "target/a-difference.png"))}
+              :difference (.getAbsolutePath (io/file "target/a.difference.png"))}
 
              (compare-images expected
                              actual
@@ -42,8 +42,8 @@
         (is (= {:metric              0
                 :expected            (.getAbsolutePath expected)
                 :actual              (.getAbsolutePath actual)
-                :actual-normalised   (.getAbsolutePath (io/file "target/a-cropped.png"))
-                :difference          (.getAbsolutePath (io/file "target/c-difference.png"))}
+                :actual-normalised   (.getAbsolutePath (io/file "target/a.normalised.png"))
+                :difference          (.getAbsolutePath (io/file "target/c.difference.png"))}
 
                (compare-images expected
                                actual
@@ -61,9 +61,9 @@
 
         (is (= {:metric              0
                 :expected            (.getAbsolutePath expected)
-                :expected-normalised (.getAbsolutePath (io/file "target/a-cropped.png"))
+                :expected-normalised (.getAbsolutePath (io/file "target/a.expected.normalised.png"))
                 :actual              (.getAbsolutePath actual)
-                :difference          (.getAbsolutePath (io/file "target/a-difference.png"))}
+                :difference          (.getAbsolutePath (io/file "target/a.difference.png"))}
 
                (compare-images expected
                                actual

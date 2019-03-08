@@ -43,17 +43,17 @@
    (let [file-name (.getName file)]
      (io/file dir (string/replace file-name #"\.(\w+)$" (str suffix ".$1"))))))
 
-(defn- normalise-images [output-directory ^File a ^File b opts]
-  (let [a-dimensions (dimensions a opts)
-        b-dimensions (dimensions b opts)]
-    (if (and a-dimensions b-dimensions
-             (not= a-dimensions b-dimensions))
-      (let [[target-width target-height] [(apply min (map first [a-dimensions b-dimensions]))
-                                          (apply min (map second [a-dimensions b-dimensions]))]]
-        (mapv (fn [[^File file [width height]]]
+(defn- normalise-images [output-directory ^File expected ^File actual opts]
+  (let [expected-dimensions (dimensions expected opts)
+        actual-dimensions (dimensions actual opts)]
+    (if (and expected-dimensions actual-dimensions
+             (not= expected-dimensions actual-dimensions))
+      (let [[target-width target-height] [(apply min (map first [expected-dimensions actual-dimensions]))
+                                          (apply min (map second [expected-dimensions actual-dimensions]))]]
+        (mapv (fn [[^File file suffix [width height]]]
                 (if (or (< target-width width)
                         (< target-height height))
-                  (let [cropped (append-suffix output-directory file "-cropped")]
+                  (let [cropped (append-suffix output-directory file suffix)]
                     (magick "convert"
                             [(.getAbsolutePath file)
                              "-crop"
@@ -62,9 +62,9 @@
                             opts)
                     cropped)
                   file))
-              [[a a-dimensions]
-               [b b-dimensions]]))
-      [a b])))
+              [[expected ".expected.normalised" expected-dimensions]
+               [actual ".normalised" actual-dimensions]]))
+      [expected actual])))
 
 (defn compare-images [^File expected
                       ^File actual
@@ -78,7 +78,7 @@
                                                 (catch Throwable t
                                                   (log/warn "Error normalising images" t)
                                                   [expected actual]))
-         difference (append-suffix screenshot-directory expected "-difference")
+         difference (append-suffix screenshot-directory expected ".difference")
          {:keys [stdout stderr exit-code]}
          (magick "compare"
                  ["-verbose" "-metric" "mae" "-compose" "src"
@@ -108,7 +108,7 @@
 
 (defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory] :as target} opts]
   (let [data (.captureScreenshot session)
-        file (io/file screenshot-directory reference-file)]
+        file (append-suffix screenshot-directory reference-file ".actual")]
     (if data
       (do (io/make-parents file)
           (doto (io/output-stream file)
