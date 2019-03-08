@@ -60,6 +60,7 @@
   (let [dom (.getDOM (.getCommand session))
         root-node (.getDocument dom)
         html (.getOuterHTML dom (.getNodeId root-node) nil nil)]
+    (log/info "Devcards html looks like" html)
     (extract-links html)))
 
 (def default-opts
@@ -84,6 +85,7 @@
          (stop-devcards build-or-id)))))
 
   ([devcards-url ^Session session _ {:keys [init-hook] :as opts}]
+   (log/info "Navigating to" devcards-url)
    (.navigate session devcards-url)
    (.waitDocumentReady session 15000)
    (Thread/sleep 2000)
