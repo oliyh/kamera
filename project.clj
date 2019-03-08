@@ -11,6 +11,7 @@
                  [com.bhauman/figwheel-main "0.1.9"]
                  [hickory "0.7.1"]]
   :resource-paths ["example/resources"]
+  :monkeypatch-clojure-test false
   :profiles {:dev {:dependencies [;; required for example project
                                   [reagent "0.8.1"]
                                   [devcards "0.2.6"]]}})
