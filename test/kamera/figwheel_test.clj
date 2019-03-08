@@ -1,6 +1,6 @@
 (ns kamera.figwheel-test
   (:require [kamera.figwheel :as kf]
-            [clojure.test :refer [deftest testing is]]
+            [clojure.test :as test :refer [deftest testing is]]
             [clojure.java.io :as io])
   (:import [java.io File]))
 
@@ -10,6 +10,11 @@
       (doseq [f (.list (io/file d))]
         (io/delete-file (io/file d f)))
       (io/delete-file (io/file d)))))
+
+(defn- reinstall-methods [multi-fn methods]
+  (doseq [[dispatch-val method] methods]
+    (remove-method multi-fn dispatch-val)
+    (.addMethod multi-fn dispatch-val method)))
 
 (deftest example-figwheel-test
   (let [test-config (io/file "example/kamera.cljs.edn")
@@ -33,6 +38,29 @@
                                                   :screenshot-directory target-dir})
                    (assoc-in [:chrome-options :chrome-args] ["--headless" "--window-size=1280,1024"]))]
 
-      (kf/test-devcards build-id opts))
+      (let [passes (atom [])
+            failures (atom [])
+            original-report-methods (select-keys (methods test/report) [:fail :pass])]
+
+        (defmethod test/report :pass [m]
+          (swap! passes conj m))
+
+        (defmethod test/report :fail [m]
+          (swap! failures conj m))
+
+        (try
+          (kf/test-devcards build-id opts)
+          (finally
+            (reinstall-methods test/report original-report-methods)))
+
+        (is (= 1 (count @failures)))
+        (is (re-find #"example.another_core_test.png has diverged from reference by \d+\.\d+"
+                     (-> @failures first :message))
+            "Expected a failure message for example.another_core_test")
+
+        (is (= 1 (count @passes)))
+        (is (re-find #"example.core_test.png has diverged from reference by 0"
+                     (-> @passes first :message))
+            "Expected a zero divergence for example.core_test")))
 
     (io/delete-file test-config)))
