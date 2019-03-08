@@ -26,6 +26,12 @@
      :stderr (sh/stream-to-string process :err)
      :exit-code (sh/exit-code process imagemagick-timeout)}))
 
+(defn ^File append-suffix
+  ([^File file suffix] (append-suffix (.getParent file) file suffix))
+  ([dir ^File file suffix]
+   (let [file-name (.getName file)]
+     (io/file dir (string/replace file-name #"\.(\w+)$" (str suffix ".$1"))))))
+
 (defn dimensions [^File image opts]
   (let [{:keys [stdout exit-code]} (magick "convert"
                                            [(.getAbsolutePath image)
@@ -37,33 +43,48 @@
     (when (zero? exit-code)
       (mapv #(Long/parseLong (string/trim %)) (string/split stdout #":")))))
 
-(defn ^File append-suffix
-  ([^File file suffix] (append-suffix (.getParent file) file suffix))
-  ([dir ^File file suffix]
-   (let [file-name (.getName file)]
-     (io/file dir (string/replace file-name #"\.(\w+)$" (str suffix ".$1"))))))
+(defn- crop-images [^File expected ^File actual opts]
+  (let [expected-dimensions (dimensions expected opts)
+        actual-dimensions (dimensions actual opts)
+        [target-width target-height] [(apply min (map first [expected-dimensions actual-dimensions]))
+                                      (apply min (map second [expected-dimensions actual-dimensions]))]]
+    (mapv (fn [[^File file [width height]]]
+            (if (or (< target-width width)
+                    (< target-height height))
+              (let [cropped (append-suffix file ".cropped")]
+                (magick "convert"
+                        [(.getAbsolutePath file)
+                         "-crop"
+                         (format "%sx%s+0+0" target-width target-height)
+                         (.getAbsolutePath cropped)]
+                        opts)
+                cropped)
+              file))
+          [[expected expected-dimensions]
+           [actual actual-dimensions]])))
 
-(defn- normalise-images [output-directory ^File expected ^File actual opts]
+(defn- trim-images [^File expected ^File actual opts]
+  (mapv (fn [^File file]
+          (let [trimmed (append-suffix file ".trimmed")]
+            (magick "convert"
+                    [(.getAbsolutePath file)
+                     "-trim"
+                     "+repage"
+                     "-fuzz" "1%"
+                     (.getAbsolutePath trimmed)]
+                    opts)
+            trimmed))
+        [expected actual]))
+
+(defn- normalise-images [^File expected ^File actual opts]
   (let [expected-dimensions (dimensions expected opts)
         actual-dimensions (dimensions actual opts)]
     (if (and expected-dimensions actual-dimensions
              (not= expected-dimensions actual-dimensions))
-      (let [[target-width target-height] [(apply min (map first [expected-dimensions actual-dimensions]))
-                                          (apply min (map second [expected-dimensions actual-dimensions]))]]
-        (mapv (fn [[^File file suffix [width height]]]
-                (if (or (< target-width width)
-                        (< target-height height))
-                  (let [cropped (append-suffix output-directory file suffix)]
-                    (magick "convert"
-                            [(.getAbsolutePath file)
-                             "-crop"
-                             (format "%sx%s+0+0" target-width target-height)
-                             (.getAbsolutePath cropped)]
-                            opts)
-                    cropped)
-                  file))
-              [[expected ".expected.normalised" expected-dimensions]
-               [actual ".normalised" actual-dimensions]]))
+      (reduce (fn [[e a] f]
+                (f e a opts))
+              [expected actual]
+              [trim-images crop-images])
       [expected actual])))
 
 (defn compare-images [^File expected
@@ -74,7 +95,7 @@
    {:metric 1
     :expected (.getAbsolutePath expected)
     :actual (.getAbsolutePath actual)}
-   (let [[^File expected-n ^File actual-n] (try (normalise-images screenshot-directory expected actual opts)
+   (let [[^File expected-n ^File actual-n] (try (normalise-images expected actual opts)
                                                 (catch Throwable t
                                                   (log/warn "Error normalising images" t)
                                                   [expected actual]))
@@ -136,7 +157,11 @@
 (defn test-target [session {:keys [root url reference-directory reference-file screenshot-directory metric-threshold] :as target} opts]
   (testing url
     (log/info "Testing" target)
-    (let [expected (io/file reference-directory reference-file)
+    (let [source-expected (io/file reference-directory reference-file)
+          expected (let [ex (append-suffix screenshot-directory source-expected ".expected")]
+                     (io/make-parents ex)
+                     (io/copy source-expected ex)
+                     ex)
           actual (screenshot-target session target opts)
           {:keys [metric errors] :as report} (compare-images expected actual target opts)]
 

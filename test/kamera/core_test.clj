@@ -3,6 +3,12 @@
             [clojure.java.io :as io]
             [kamera.core :refer [compare-images dimensions default-opts append-suffix]]))
 
+(defn- copy-target [src-file suffix]
+  (let [src (io/file src-file)
+        dest (append-suffix "target" src suffix)]
+    (io/copy src dest)
+    dest))
+
 (deftest image-comparison-test
   (testing "can compare identical images"
     (let [expected (io/file "test-resources/a.png")]
@@ -31,8 +37,8 @@
 
   (testing "can compare different images that have different dimensions"
     (testing "when actual is bigger than expected"
-      (let [expected (io/file "test-resources/c.png")
-            actual (io/file "test-resources/a.png")
+      (let [expected (copy-target "test-resources/c.png" ".expected")
+            actual (copy-target "test-resources/a.png" ".actual")
             [expected-width expected-height] (dimensions expected default-opts)
             [actual-width actual-height] (dimensions actual default-opts)]
 
@@ -41,9 +47,10 @@
 
         (is (= {:metric              0
                 :expected            (.getAbsolutePath expected)
+                :expected-normalised (.getAbsolutePath (io/file "target/c.expected.trimmed.png"))
                 :actual              (.getAbsolutePath actual)
-                :actual-normalised   (.getAbsolutePath (io/file "target/a.normalised.png"))
-                :difference          (.getAbsolutePath (io/file "target/c.difference.png"))}
+                :actual-normalised   (.getAbsolutePath (io/file "target/a.actual.trimmed.cropped.png"))
+                :difference          (.getAbsolutePath (io/file "target/c.expected.difference.png"))}
 
                (compare-images expected
                                actual
@@ -51,8 +58,8 @@
                                default-opts)))))
 
     (testing "when expected is bigger than actual"
-      (let [expected (io/file "test-resources/a.png")
-            actual (io/file "test-resources/c.png")
+      (let [expected (copy-target "test-resources/a.png" ".expected")
+            actual (copy-target "test-resources/c.png" ".actual")
             [expected-width expected-height] (dimensions expected default-opts)
             [actual-width actual-height] (dimensions actual default-opts)]
 
@@ -61,9 +68,10 @@
 
         (is (= {:metric              0
                 :expected            (.getAbsolutePath expected)
-                :expected-normalised (.getAbsolutePath (io/file "target/a.expected.normalised.png"))
+                :expected-normalised (.getAbsolutePath (io/file "target/a.expected.trimmed.cropped.png"))
                 :actual              (.getAbsolutePath actual)
-                :difference          (.getAbsolutePath (io/file "target/a.difference.png"))}
+                :actual-normalised   (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))
+                :difference          (.getAbsolutePath (io/file "target/a.expected.difference.png"))}
 
                (compare-images expected
                                actual
@@ -73,7 +81,6 @@
   (testing "fails when an image doesn't exist"
     (let [expected (io/file "test-resources/a.png")
           actual (io/file "test-resources/non-existent.png")
-          diff (io/file "target/a_non-existent.png")
           result (compare-images expected
                                  actual
                                  {:screenshot-directory "target"}
@@ -85,6 +92,23 @@
              (dissoc result :errors)))
 
       (is (:errors result)))))
+
+(deftest screenshot-comparison-test
+  (testing "real life difference in screenshots where margins are different"
+    (let [expected (copy-target "test-resources/d1.png" ".expected")
+          actual (copy-target "test-resources/d2.png" ".actual")
+          result (compare-images expected
+                                 actual
+                                 {:screenshot-directory "target"}
+                                 default-opts)]
+      (is (= {:metric 0.00189661,
+              :expected (.getAbsolutePath expected)
+              :actual (.getAbsolutePath actual)
+              :actual-normalised (.getAbsolutePath (append-suffix actual ".trimmed.cropped"))
+              :expected-normalised (.getAbsolutePath (append-suffix expected ".trimmed.cropped"))
+              :difference (.getAbsolutePath (append-suffix expected ".difference"))}
+
+             result)))))
 
 (deftest dimensions-test
   (is (= [800 840]
