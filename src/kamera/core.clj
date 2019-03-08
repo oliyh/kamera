@@ -108,7 +108,7 @@
 
 (defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory] :as target} opts]
   (let [data (.captureScreenshot session)
-        file (append-suffix screenshot-directory reference-file ".actual")]
+        file (append-suffix screenshot-directory (io/file reference-file) ".actual")]
     (if data
       (do (io/make-parents file)
           (doto (io/output-stream file)
@@ -138,7 +138,7 @@
     (log/info "Testing" target)
     (let [expected (io/file reference-directory reference-file)
           actual (screenshot-target session target opts)
-          {:keys [metric errors] :as report} (compare-images expected actual opts)]
+          {:keys [metric errors] :as report} (compare-images expected actual target opts)]
 
       (when (not-empty errors)
         (println (format "Errors occurred testing %s:" url))
@@ -147,7 +147,11 @@
 
       (is (< metric metric-threshold)
           (format "%s has diverged from reference by %s, please compare \nExpected: %s \nActual: %s \nDifference: %s"
-                  reference-file metric (:expected report) (:actual report) (:difference report))))))
+                  reference-file
+                  metric
+                  (or (:expected-normalised report) (:expected report))
+                  (or (:actual-normalised report) (:actual report))
+                  (:difference report))))))
 
 (def default-opts
   {:path-to-imagemagick nil ;; directory where binaries reside on linux, or executable on windows
