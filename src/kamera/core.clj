@@ -4,7 +4,8 @@
             [clojure.test :refer [testing is]]
             [figwheel.main.api :as fig-api]
             [doo-chrome-devprotocol.core :as dcd]
-            [clojure.string :as string])
+            [clojure.string :as string]
+            [clojure.tools.logging :as log])
   (:import [io.webfolder.cdp.session Session]
            [java.util.function Predicate]
            [java.io File]))
@@ -34,7 +35,7 @@
                                             "info:"]
                                            opts)]
     (when (zero? exit-code)
-      (mapv #(Long/parseLong %) (string/split stdout #":")))))
+      (mapv #(Long/parseLong (string/trim %)) (string/split stdout #":")))))
 
 (defn append-suffix [^File file suffix]
   (let [dir (.getParent file)
@@ -72,7 +73,10 @@
    {:metric 1
     :expected (.getAbsolutePath expected)
     :actual (.getAbsolutePath actual)}
-   (let [[expected-n actual-n] (normalise-images expected actual opts)
+   (let [[expected-n actual-n] (try (normalise-images expected actual opts)
+                                    (catch Throwable t
+                                      (log/warn "Error normalising images" t)
+                                      [expected actual]))
          {:keys [stdout stderr exit-code]}
          (magick "compare"
                  ["-verbose" "-metric" "mae" "-compose" "src"
