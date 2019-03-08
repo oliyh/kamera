@@ -44,6 +44,4 @@ jobs:
 
       - run: lein install
 
-      - run: cd example
-
-      - run: lein test
+      - run: cd example && lein test
