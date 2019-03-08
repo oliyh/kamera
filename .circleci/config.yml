@@ -44,4 +44,4 @@ jobs:
 
       - run: lein install
 
-      - run: cd example && lein test
+      - run: ./test-example-project.sh

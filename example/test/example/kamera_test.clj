@@ -3,6 +3,7 @@
             [clojure.test :refer [deftest testing is]]))
 
 (deftest devcards-test
+  (println "Running example project kamera tests")
   (let [build-id "dev"
         opts (-> kf/default-opts
                  (update :default-target merge {:reference-directory "test-resources/kamera"
