@@ -88,7 +88,7 @@
    (log/info "Navigating to" devcards-url)
    (.navigate session devcards-url)
    (.waitDocumentReady session 15000)
-   (Thread/sleep 2000)
+   (Thread/sleep 10000) ;; wait for devcards to load fully
    (when init-hook
      (init-hook session))
    (let [target-urls (find-test-urls session)]
