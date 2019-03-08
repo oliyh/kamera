@@ -37,22 +37,23 @@
     (when (zero? exit-code)
       (mapv #(Long/parseLong (string/trim %)) (string/split stdout #":")))))
 
-(defn append-suffix [^File file suffix]
-  (let [dir (.getParent file)
-        file-name (.getName file)]
-    (io/file dir (string/replace file-name #"\.(\w+)$" (str suffix ".$1")))))
+(defn ^File append-suffix
+  ([^File file suffix] (append-suffix (.getParent file) file suffix))
+  ([dir ^File file suffix]
+   (let [file-name (.getName file)]
+     (io/file dir (string/replace file-name #"\.(\w+)$" (str suffix ".$1"))))))
 
-(defn- normalise-images [^File a ^File b opts]
+(defn- normalise-images [output-directory ^File a ^File b opts]
   (let [a-dimensions (dimensions a opts)
         b-dimensions (dimensions b opts)]
     (if (and a-dimensions b-dimensions
              (not= a-dimensions b-dimensions))
       (let [[target-width target-height] [(apply min (map first [a-dimensions b-dimensions]))
                                           (apply min (map second [a-dimensions b-dimensions]))]]
-        (mapv (fn [[file [width height]]]
+        (mapv (fn [[^File file [width height]]]
                 (if (or (< target-width width)
                         (< target-height height))
-                  (let [cropped (append-suffix file "-cropped")]
+                  (let [cropped (append-suffix output-directory file "-cropped")]
                     (magick "convert"
                             [(.getAbsolutePath file)
                              "-crop"
@@ -67,16 +68,17 @@
 
 (defn compare-images [^File expected
                       ^File actual
-                      ^File difference
+                      {:keys [screenshot-directory]}
                       opts]
   (merge
    {:metric 1
     :expected (.getAbsolutePath expected)
     :actual (.getAbsolutePath actual)}
-   (let [[expected-n actual-n] (try (normalise-images expected actual opts)
-                                    (catch Throwable t
-                                      (log/warn "Error normalising images" t)
-                                      [expected actual]))
+   (let [[^File expected-n ^File actual-n] (try (normalise-images screenshot-directory expected actual opts)
+                                                (catch Throwable t
+                                                  (log/warn "Error normalising images" t)
+                                                  [expected actual]))
+         difference (append-suffix screenshot-directory expected "-difference")
          {:keys [stdout stderr exit-code]}
          (magick "compare"
                  ["-verbose" "-metric" "mae" "-compose" "src"
@@ -133,10 +135,10 @@
 
 (defn test-target [session {:keys [root url reference-directory reference-file screenshot-directory metric-threshold] :as target} opts]
   (testing url
+    (log/info "Testing" target)
     (let [expected (io/file reference-directory reference-file)
           actual (screenshot-target session target opts)
-          difference (io/file screenshot-directory (append-suffix expected "-difference"))
-          {:keys [metric errors] :as report} (compare-images expected actual difference opts)]
+          {:keys [metric errors] :as report} (compare-images expected actual opts)]
 
       (when (not-empty errors)
         (println (format "Errors occurred testing %s:" url))
@@ -150,7 +152,7 @@
 (def default-opts
   {:path-to-imagemagick nil ;; directory where binaries reside on linux, or executable on windows
    :imagemagick-timeout 2000
-   :default-target {:root "http://localhost:9500/devcards.html"
+   :default-target {;; :root e.g. "http://localhost:9500/devcards.html"
                     ;; :url must be supplied on each target
                     ;; :reference-file must be supplied on each target
                     :metric-threshold 0.01
