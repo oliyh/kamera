@@ -60,7 +60,6 @@
   (let [dom (.getDOM (.getCommand session))
         root-node (.getDocument dom)
         html (.getOuterHTML dom (.getNodeId root-node) nil nil)]
-    (log/info "Devcards html looks like" html)
     (extract-links html)))
 
 (def default-opts
