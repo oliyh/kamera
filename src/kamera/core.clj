@@ -163,7 +163,8 @@
                     :load-timeout 60000
                     :reference-directory "test-resources/kamera"
                     :screenshot-directory "target/kamera"}
-   :chrome-options dcd/default-options})
+   :chrome-options dcd/default-options ;; suggest you fix the width/height to make it device independant
+   })
 
 ;; this is the general usecase of there is a website, i want to visit these links and do the comparison
 ;; could provide a callback to dynamically find the urls, references etc
