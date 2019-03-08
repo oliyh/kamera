@@ -34,6 +34,8 @@
 
     (let [build-id "example/kamera"
           opts (-> kf/default-opts
+                   (assoc :init-hook (fn [session]
+                                       (is session "Init hook was called")))
                    (update :default-target merge {:reference-directory "example/test-resources/kamera"
                                                   :screenshot-directory target-dir})
                    (assoc-in [:chrome-options :chrome-args] ["--headless" "--window-size=1280,1024"]))]
@@ -56,11 +58,13 @@
         (is (= 1 (count @failures)))
         (is (re-find #"example.another_core_test.png has diverged from reference by \d+\.\d+"
                      (-> @failures first :message))
-            "Expected a failure message for example.another_core_test")
+            "A failure message for example.another_core_test")
 
-        (is (= 1 (count @passes)))
+        (is (= 2 (count @passes)))
+        (is (= "Init hook was called" (-> @passes first :message)))
+
         (is (re-find #"example.core_test.png has diverged from reference by 0"
-                     (-> @passes first :message))
-            "Expected a zero divergence for example.core_test")))
+                     (-> @passes second :message))
+            "A zero divergence for example.core_test")))
 
     (io/delete-file test-config)))

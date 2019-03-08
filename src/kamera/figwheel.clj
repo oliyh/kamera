@@ -6,10 +6,12 @@
             [hickory.select :as s]
             [clojure.string :as string]
             [doo-chrome-devprotocol.core :as dcd]
-            [clojure.test :refer [deftest]])
+            [clojure.test :refer [deftest]]
+            [clojure.tools.logging :as log])
   (:import [io.webfolder.cdp.session Session]))
 
 (defn start-devcards [build-id {:keys [devcards-path]}]
+  (log/info "Starting figwheel" build-id)
   (fig-api/start {:mode :serve
                   :open-url false
                   :connect-url (format "http://[[config-hostname]]:[[server-port]]/%s" devcards-path)}
@@ -44,7 +46,9 @@
 
 (def default-opts
   (assoc k/default-opts
-         :devcards-path "devcards.html"))
+         :devcards-path "devcards.html"
+         :init-hook nil ;; (fn [session]) function run before attempting to scrape targets
+         ))
 
 (defn test-devcards
   ([build-id] (test-devcards build-id default-opts))
@@ -61,10 +65,12 @@
        (finally
          (stop-devcards build-id)))))
 
-  ([devcards-url ^Session session build-id opts]
+  ([devcards-url ^Session session build-id {:keys [init-hook] :as opts}]
    (.navigate session devcards-url)
    (.waitDocumentReady session 15000)
    (Thread/sleep 2000)
+   (when init-hook
+     (init-hook session))
    (let [target-urls (find-test-urls session)]
      (k/run-tests
       session
