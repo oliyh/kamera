@@ -107,7 +107,10 @@ expected: (< metric metric-threshold)
     :metric-threshold 0.01                       ;; difference metric above which comparison fails
     :load-timeout 60000                          ;; max time in ms to wait for target url to load
     :reference-directory "test-resources/kamera" ;; directory where reference images are store
-    :screenshot-directory "target/kamera"}       ;; diredtory where screenshots and diffs should be saved
+    :screenshot-directory "target/kamera"        ;; diredtory where screenshots and diffs should be saved
+    :normalisations [:trim :crop]}               ;; normalisations to apply to expected and actual images before comparison, in order of application
+ :normalisation-fns {:trim trim-fn               ;; normalisation functions, add any that you wish to use - see trim and crop for signature
+                     :crop crop-fn}
  :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc
 ```
 
