@@ -15,12 +15,13 @@
                {:keys [path-to-imagemagick
                        imagemagick-timeout]}]
   (let [executable (or (when path-to-imagemagick
-                         (.getAbsolutePath (let [f (io/file path-to-imagemagick)]
-                                             (if (.isDirectory f)
-                                               (io/file f operation)
-                                               f))))
-                       operation)
-        args (cons executable operation-args)
+                         (let [f (io/file path-to-imagemagick)]
+                           (if (.isDirectory f)
+                             [(.getAbsolutePath (io/file f operation))]
+                             [(.getAbsolutePath f) operation])))
+                       [operation])
+        args (into executable operation-args)
+        _ (println "args:" args)
         process (apply sh/proc args)]
     {:stdout (sh/stream-to-string process :out)
      :stderr (sh/stream-to-string process :err)
