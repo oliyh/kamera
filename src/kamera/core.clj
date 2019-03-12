@@ -21,7 +21,6 @@
                              [(.getAbsolutePath f) operation])))
                        [operation])
         args (into executable operation-args)
-        _ (println "args:" args)
         process (apply sh/proc args)]
     {:stdout (sh/stream-to-string process :out)
      :stderr (sh/stream-to-string process :err)
