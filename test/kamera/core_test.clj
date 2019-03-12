@@ -54,7 +54,7 @@
 
                (compare-images expected
                                actual
-                               {:screenshot-directory "target"}
+                               (assoc (:default-target default-opts) :screenshot-directory "target")
                                default-opts)))))
 
     (testing "when expected is bigger than actual"
@@ -75,15 +75,38 @@
 
                (compare-images expected
                                actual
-                               {:screenshot-directory "target"}
+                               (assoc (:default-target default-opts) :screenshot-directory "target")
                                default-opts))))))
+
+  (testing "fails when images are different sizes and normalisations were not sufficient"
+    (let [expected (copy-target "test-resources/a.png" ".expected")
+          actual (copy-target "test-resources/c.png" ".actual")
+          [expected-width expected-height] (dimensions expected default-opts)
+          [actual-width actual-height] (dimensions actual default-opts)]
+
+      (is (< actual-width expected-width))
+      (is (< actual-height expected-height))
+
+      (let [result (compare-images expected
+                                   actual
+                                   {:screenshot-directory "target"
+                                    :normalisations [:trim]}
+                                   default-opts)]
+        (is (= {:metric              1
+                :expected            (.getAbsolutePath expected)
+                :expected-normalised (.getAbsolutePath (io/file "target/a.expected.trimmed.png"))
+                :actual              (.getAbsolutePath actual)
+                :actual-normalised   (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))}
+               (dissoc result :errors)))
+
+        (is (:errors result)))))
 
   (testing "fails when an image doesn't exist"
     (let [expected (io/file "test-resources/a.png")
           actual (io/file "test-resources/non-existent.png")
           result (compare-images expected
                                  actual
-                                 {:screenshot-directory "target"}
+                                 (assoc (:default-target default-opts) :screenshot-directory "target")
                                  default-opts)]
       (is (= {:expected   (.getAbsolutePath expected)
               :actual     (.getAbsolutePath actual)
@@ -99,7 +122,7 @@
           actual (copy-target "test-resources/d2.png" ".actual")
           result (compare-images expected
                                  actual
-                                 {:screenshot-directory "target"}
+                                 (assoc (:default-target default-opts) :screenshot-directory "target")
                                  default-opts)]
       (is (= {:metric 0.00189661,
               :expected (.getAbsolutePath expected)

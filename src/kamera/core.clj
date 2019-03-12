@@ -77,7 +77,7 @@
             trimmed))
         [expected actual]))
 
-(defn- normalise-images [^File expected ^File actual opts]
+(defn- normalise-images [normalisations ^File expected ^File actual {:keys [normalisation-fns] :as opts}]
   (let [expected-dimensions (dimensions expected opts)
         actual-dimensions (dimensions actual opts)]
     (if (and expected-dimensions actual-dimensions
@@ -85,18 +85,18 @@
       (reduce (fn [[e a] f]
                 (f e a opts))
               [expected actual]
-              [trim-images crop-images])
+              (map normalisation-fns normalisations))
       [expected actual])))
 
 (defn compare-images [^File expected
                       ^File actual
-                      {:keys [screenshot-directory]}
+                      {:keys [screenshot-directory normalisations]}
                       opts]
   (merge
    {:metric 1
     :expected (.getAbsolutePath expected)
     :actual (.getAbsolutePath actual)}
-   (let [[^File expected-n ^File actual-n] (try (normalise-images expected actual opts)
+   (let [[^File expected-n ^File actual-n] (try (normalise-images normalisations expected actual opts)
                                                 (catch Throwable t
                                                   (log/warn "Error normalising images" t)
                                                   [expected actual]))
@@ -188,7 +188,10 @@
                     :metric-threshold 0.01
                     :load-timeout 60000
                     :reference-directory "test-resources/kamera"
-                    :screenshot-directory "target/kamera"}
+                    :screenshot-directory "target/kamera"
+                    :normalisations [:trim :crop]}
+   :normalisation-fns {:trim trim-images
+                       :crop crop-images}
    :chrome-options dcd/default-options ;; suggest you fix the width/height to make it device independant
    })
 
