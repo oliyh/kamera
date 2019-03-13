@@ -1,4 +1,4 @@
-(ns kamera.figwheel
+(ns kamera.devcards
   (:require [kamera.core :as k]
             [figwheel.main.api :as fig-api]
             [figwheel.main :as fig]

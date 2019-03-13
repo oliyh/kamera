@@ -1,5 +1,5 @@
-(ns kamera.figwheel-test
-  (:require [kamera.figwheel :as kf]
+(ns kamera.devcards-test
+  (:require [kamera.devcards :as kd]
             [clojure.test :as test :refer [deftest testing is]]
             [clojure.java.io :as io])
   (:import [java.io File]))
@@ -33,7 +33,7 @@
       (spit test-config (prn-str figwheel-config)))
 
     (let [build-id "example/kamera"
-          opts (-> kf/default-opts
+          opts (-> kd/default-opts
                    (assoc :init-hook (fn [session]
                                        (is session "Init hook was called")))
                    (update :default-target merge {:reference-directory "example/test-resources/kamera"
@@ -51,7 +51,7 @@
           (swap! failures conj m))
 
         (try
-          (kf/test-devcards build-id opts)
+          (kd/test-devcards build-id opts)
           (finally
             (reinstall-methods test/report original-report-methods)))
 

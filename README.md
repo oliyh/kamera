@@ -1,6 +1,6 @@
 # kamera
 
-Visual testing tools for Clojure with figwheel integration.
+Visual testing tools for Clojure with figwheel-main integration.
 
 When data is represented visually for a human to view great care must be taken to present it intuitively, accessibly
 and beautifully. This requires skill and time, and above all requires human judgement to attest to its efficacy.
@@ -14,7 +14,7 @@ which you can use to display components in as many known states as possible. If 
 business logic you can ensure that refactoring will not affect them and prevent them becoming brittle - I outlined this approach
 in a [blog post for JUXT](https://juxt.pro/blog/posts/cljs-apps.html).
 
-kamera has figwheel integration to allow it to scan all your devcards automatically - you just need to provide it with
+kamera has figwheel-main integration to allow it to scan all your devcards automatically - you just need to provide it with
 the directory where reference versions reside.
 
 ## Usage
@@ -62,16 +62,16 @@ and compare the actual with the expected, failing if the difference is above a c
 
 ```clojure
 (ns example.devcards-test
-  (:require [kamera.figwheel :as kf]
+  (:require [kamera.devcards :as kd]
             [clojure.test :refer [deftest testing is]]))
 
 (deftest devcards-test
   (let [build-id "dev"
-        opts (-> kf/default-opts
+        opts (-> kd/default-opts
                  (update :default-target merge {:reference-directory "test-resources/kamera"
                                                 :screenshot-directory "target/kamera"}))]
 
-    (kf/test-devcards build-id opts)))
+    (kd/test-devcards build-id opts)))
 ```
 
 The output will look something like this:
