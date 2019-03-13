@@ -1,6 +1,6 @@
 # kamera
 
-Visual testing tools for Clojure with figwheel-main integration.
+Visual testing tools for Clojure with [figwheel-main](https://github.com/bhauman/figwheel-main) integration.
 
 When data is represented visually for a human to view great care must be taken to present it intuitively, accessibly
 and beautifully. This requires skill and time, and above all requires human judgement to attest to its efficacy.
@@ -14,7 +14,7 @@ which you can use to display components in as many known states as possible. If 
 business logic you can ensure that refactoring will not affect them and prevent them becoming brittle - I outlined this approach
 in a [blog post for JUXT](https://juxt.pro/blog/posts/cljs-apps.html).
 
-kamera has figwheel-main integration to allow it to scan all your devcards automatically - you just need to provide it with
+kamera has [figwheel-main](https://github.com/bhauman/figwheel-main) integration to allow it to scan all your devcards automatically - you just need to provide it with
 the directory where reference versions reside.
 
 ## Usage
@@ -104,6 +104,7 @@ expected: (< metric metric-threshold)
  :imagemagick-timeout 2000                       ;; die if any imagemagick operation takes longer than this, in ms
  :default-target                                 ;; default options for each image comparison
    {:root "http://localhost:9500/devcards.html"  ;; the common root url where all targets can be found
+    :metric "mae"                                ;; the imagemagick metric to use for comparison, see https://imagemagick.org/script/command-line-options.php#metric
     :metric-threshold 0.01                       ;; difference metric above which comparison fails
     :load-timeout 60000                          ;; max time in ms to wait for target url to load
     :reference-directory "test-resources/kamera" ;; directory where reference images are store

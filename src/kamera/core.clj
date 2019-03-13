@@ -89,7 +89,7 @@
 
 (defn compare-images [^File expected
                       ^File actual
-                      {:keys [screenshot-directory normalisations]}
+                      {:keys [metric screenshot-directory normalisations]}
                       opts]
   (merge
    {:metric 1
@@ -102,7 +102,7 @@
          difference (append-suffix screenshot-directory expected ".difference")
          {:keys [stdout stderr exit-code]}
          (magick "compare"
-                 ["-verbose" "-metric" "mae" "-compose" "src"
+                 ["-verbose" "-metric" metric "-compose" "src"
                   (.getAbsolutePath expected-n)
                   (.getAbsolutePath actual-n)
                   (.getAbsolutePath difference)]
@@ -186,6 +186,7 @@
    :default-target {;; :root e.g. "http://localhost:9500/devcards.html"
                     ;; :url must be supplied on each target
                     ;; :reference-file must be supplied on each target
+                    :metric "mae" ;; see https://imagemagick.org/script/command-line-options.php#metric
                     :metric-threshold 0.01
                     :load-timeout 60000
                     :reference-directory "test-resources/kamera"
