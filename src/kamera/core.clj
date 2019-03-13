@@ -155,7 +155,7 @@
   (take-screenshot session target opts))
 
 (defn test-target [session {:keys [root url reference-directory reference-file screenshot-directory metric-threshold] :as target} opts]
-  (testing url
+  (testing (str root url)
     (log/info "Testing" target)
     (let [source-expected (io/file reference-directory reference-file)
           expected (let [ex (append-suffix screenshot-directory source-expected ".expected")]

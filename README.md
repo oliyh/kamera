@@ -9,6 +9,8 @@ Once this has been achieved it would be nice to ensure that it does not suffer r
 help you capture and compare screenshots of your application, failing if there is too much divergence between an expected
 reference image and the current display.
 
+![](doc/juxtaposed.png?raw=true)
+
 The best way to test visual representation is to create [devcards](https://github.com/bhauman/devcards)
 which you can use to display components in as many known states as possible. If you ensure you separate rendering from
 business logic you can ensure that refactoring will not affect them and prevent them becoming brittle - I outlined this approach
@@ -93,9 +95,9 @@ expected: (< metric metric-threshold)
   actual: (not (< 0.020624 0.01))
 ```
 
-![](doc/example.another_core_test.png?raw=true)
-![](doc/example.another_core_test-difference.png?raw=true)
-![](doc/example.core_test.png?raw=true)
+![](doc/expected.png?raw=true)
+![](doc/actual.png?raw=true)
+![](doc/difference.png?raw=true)
 
 ## Options
 
@@ -127,3 +129,11 @@ Copyright © 2018 oliyh
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
+
+
+### todo
+- Have a table of contents
+- Example of non-devcards usage - pure image comparison (use case: driving through a selenium test)
+- More explanation of how to write your own normalisation function
+- Example of how to generate the expected images on your first run (does this work?)
+- Ensure all the code examples and example output are correct
