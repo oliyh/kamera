@@ -91,6 +91,7 @@
    (when init-hook
      (init-hook session))
    (let [target-urls (find-test-urls session)]
+     (log/infof "Found %s devcards to test" (count target-urls))
      (k/run-tests
       session
       (map (fn [target-url]

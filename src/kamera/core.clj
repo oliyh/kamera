@@ -136,7 +136,7 @@
             (.write data)
             (.close))
           file)
-      (println "Got no data from the screenshot for" reference-file))))
+      (log/warn "Got no data from the screenshot for" reference-file))))
 
 (defn- screenshot-target [^Session session {:keys [root url load-timeout] :as target} opts]
   (.navigate session "about:blank") ;; solves a weird bug navigating directly between fragment urls, i think
@@ -165,10 +165,12 @@
           actual (screenshot-target session target opts)
           {:keys [metric errors] :as report} (compare-images expected actual target opts)]
 
+      (log/info "Test result" report)
+
       (when (not-empty errors)
-        (println (format "Errors occurred testing %s:" url))
+        (log/error (format "Errors occurred testing %s:" url))
         (doseq [error errors]
-          (println error)))
+          (log/error error)))
 
       (is (< metric metric-threshold)
           (format "%s has diverged from reference by %s, please compare \nExpected: %s \nActual: %s \nDifference: %s"
