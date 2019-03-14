@@ -10,7 +10,7 @@
            [java.util.function Predicate]
            [java.io File]))
 
-(defn- magick [operation
+(defn magick [operation
                operation-args
                {:keys [path-to-imagemagick
                        imagemagick-timeout]}]

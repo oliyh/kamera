@@ -2,48 +2,46 @@
 
 Visual testing tools for Clojure with [figwheel-main](https://github.com/bhauman/figwheel-main) integration.
 
-When data is represented visually for a human to view great care must be taken to present it intuitively, accessibly
-and beautifully. This requires skill and time, and above all requires human judgement to attest to its efficacy.
+When data is represented visually for a human to view care must be taken to present it intuitively, accessibly
+and beautifully. This requires skill, time and above all human judgement.
 
-Once this has been achieved it would be nice to ensure that it does not suffer regressions. kamera is a library designed to
+Once achieved you want to ensure it does not suffer regressions. kamera is a library designed to
 help you capture and compare screenshots of your application, failing if there is too much divergence between an expected
 reference image and the current display.
 
 ![](doc/juxtaposed.png?raw=true)
 
 The best way to test visual representation is to create [devcards](https://github.com/bhauman/devcards)
-which you can use to display components in as many known states as possible. If you ensure you separate rendering from
+which you can use to display components in as many states as possible. If you ensure you separate rendering from
 business logic you can ensure that refactoring will not affect them and prevent them becoming brittle - I outlined this approach
 in a [blog post for JUXT](https://juxt.pro/blog/posts/cljs-apps.html).
 
-kamera has [figwheel-main](https://github.com/bhauman/figwheel-main) integration to allow it to scan all your devcards automatically - you just need to provide it with
-the directory where reference versions reside.
+kamera has [figwheel-main](#figwheel+devcards) integration to allow it to find all your devcards automatically - just tell it where the reference versions reside and it will do everything for you. If you don't use figwheel or devcards, kamera can accept [a list of urls](#url-driven) for you to roll your own.
+
+- [Usage](#Usage)
+  - [Figwheel + devcards](#figwheel+devcards)
+  - [URL driven](#url-driven)
+- [Options](#options)
+- [Normalisation](#normalisation)
 
 ## Usage
 
-See the [example project](https://github.com/oliyh/kamera/tree/master/example) for a full working example.
+### figwheel + devcards
 
-If you have a figwheel-main build called "dev" which has devcards enabled and a page served from /devcards.html then you
-can test your devcards as simply as this:
+_See the [example project](https://github.com/oliyh/kamera/tree/master/example) for a full working example._
 
-### Devcards (actual)
+The following assumes a figwheel-main build called `dev` which has devcards that you view at `/devcards.html`.
 
-The following devcards test files:
+If you have the following devcards files:
 
 ```bash
 test
 └── example
-    ├── another_core_test.cljs # has devcards
-    ├── core_test.cljs         # has devcards
-    ├── devcards.cljs          # runs the devcards ui
-    └── test_runner.cljs       # runs unit tests
+    ├── another_core_test.cljs
+    └── core_test.cljs
 ```
 
-will have screenshots taken to produce 'actual' images called `example.core_test.png`, `example.another_core_test.png`.
-
-### References (expected)
-
-A directory populated with reference images, named in the same way, provides the 'expected' screenshots:
+... and a directory populated with reference images, named in the same way:
 
 ```
 test-resources
@@ -52,15 +50,9 @@ test-resources
     └── example.core_test.png
 ```
 
-![](example/test-resources/kamera/example.another_core_test.png?raw=true)
-![](example/test-resources/kamera/example.core_test.png?raw=true)
+_You can generate these images initially by running kamera and copying the 'actual' files from the target directory into your reference directory__
 
-_(You can generate these images initially by running kamera and copying the 'actual' files from the screenshot directory)_
-
-### Run the test
-
-The following code will start the figwheel build called `dev`, launch Chrome, take screenshots of all the devcards
-and compare the actual with the expected, failing if the difference is above a certain threshold.
+... you can get kamera to screenshot the devcards and compare with the corresponding reference images with the following:
 
 ```clojure
 (ns example.devcards-test
@@ -76,7 +68,7 @@ and compare the actual with the expected, failing if the difference is above a c
     (kd/test-devcards build-id opts)))
 ```
 
-The output will look something like this:
+The output will look like this:
 
 ```clojure
 Results
@@ -95,9 +87,28 @@ expected: (< metric metric-threshold)
   actual: (not (< 0.020624 0.01))
 ```
 
-![](doc/expected.png?raw=true)
-![](doc/actual.png?raw=true)
-![](doc/difference.png?raw=true)
+The three files referenced will look like this:
+
+![](doc/juxtaposed.png?raw=true)
+
+### URL driven
+
+If you don't use figwheel or devcards you can still use kamera to take screenshots and compare them to reference images. You will have to provide a list of "targets" for kamera to test. Each target must provide a `:url` and `:reference-file` and can override any setting from the `:default-target` [options](#options).
+
+```clojure
+(require '[kamera.core :as k])
+
+(k/run-tests [{:url "/"
+               :reference-file "home.png"}
+              {:url "/preferences"
+               :reference-file "preferences.png"
+               :metric-threshold 0.2}
+              {:url "/help"
+               :reference-file "help.png"
+               :metric "RMSE"
+               :normalisations [:trim]}]
+             (assoc-in k/default-opts [:default-target :root] "http://localhost:9500"))
+```
 
 ## Options
 
@@ -117,6 +128,54 @@ expected: (< metric metric-threshold)
  :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc
 ```
 
+### devcards options
+
+A few additional options exist if you are using the `kamera.devcards` namespace:
+
+```clojure
+{:devcards-path "devcards.html"  ;; the relative path to the page where the devcards are hosted
+ :init-hook (fn [session] ... )} ;; function run before attempting to scrape targets
+```
+
+## Normalisation
+
+When comparing images ImageMagick requires both input images to be the same dimensions. They can easily differ when changes are made to your application, across operating systems or browser versions. Normalisation is the process of resizing both the expected and the actual images in a way that keeps the images lined up with one another for the best comparison.
+
+The built-in normalisations are `trim` and `crop`. The former cuts out whitespace around image content and the latter crops the image canvas. They are run sequentially and each stage is output to the target directory, giving a set of images as follows:
+
+```bash
+kamera
+├── example.core_test.actual.png
+├── example.core_test.actual.trimmed.cropped.png
+├── example.core_test.actual.trimmed.png
+├── example.core_test.expected.difference.png
+├── example.core_test.expected.png
+├── example.core_test.expected.trimmed.cropped.png
+└── example.core_test.expected.trimmed.png
+```
+
+You can override the normalisations to each image, perhaps adding a `resize`:
+
+```clojure
+{:normalisations [:trim :resize :crop]}
+```
+
+And provide the `resize` function in the options map:
+
+```clojure
+ :normalisation-fns {:trim   trim-fn
+                     :crop   crop-fn
+                     :resize resize-fn}
+```
+
+The signature of `resize` should look like this:
+
+```clojure
+(defn trim-images [^File expected ^File actual opts])
+```
+
+And it should return `[expected actual]`. See the existing `trim` and `crop` functions for inspiration.
+
 ## Development
 
 Start a normal Clojure REPL
@@ -132,8 +191,5 @@ your option) any later version.
 
 
 ### todo
-- Have a table of contents
-- Example of non-devcards usage - pure image comparison (use case: driving through a selenium test)
-- More explanation of how to write your own normalisation function
 - Example of how to generate the expected images on your first run (does this work?)
 - Ensure all the code examples and example output are correct
