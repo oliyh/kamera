@@ -97,7 +97,11 @@
      :expected (str (when-not (.exists expected) "Missing - ")
                     (.getAbsolutePath expected))
      :actual (str (when-not (.exists actual) "Missing - ")
-                  (.getAbsolutePath actual))}
+                  (.getAbsolutePath actual))
+     :errors (->> [(when-not (.exists expected) "Expected is missing")
+                   (when-not (.exists actual) "Actual is missing")]
+                  (remove nil?)
+                  (into []))}
 
     (merge
      {:metric 1

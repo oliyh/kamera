@@ -124,12 +124,12 @@
                                  default-target
                                  default-opts)]
       (is (= {:expected   (.getAbsolutePath expected)
-              :actual     (.getAbsolutePath actual)
+              :actual     (str "Missing - " (.getAbsolutePath actual))
               :metric 1}
-
              (dissoc result :errors)))
 
-      (is (:errors result)))))
+      (is (= ["Actual is missing"]
+             (:errors result))))))
 
 (deftest screenshot-comparison-test
   (testing "real life difference in screenshots where margins are different"
