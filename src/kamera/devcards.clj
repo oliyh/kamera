@@ -64,8 +64,9 @@
 
 (def default-opts
   (assoc k/default-opts
-         :devcards-path "devcards.html"
-         :init-hook nil ;; (fn [session]) function run before attempting to scrape targets
+         :devcards-path "devcards.html" ;; the relative path to the page where the devcards are hosted
+         :init-hook nil                 ;; (fn [session]) function run before attempting to scrape targets
+         :on-targets nil                ;; (fn [targets]) function called to allow changing the targets before the test is run
          ))
 
 (defn test-devcards
@@ -83,21 +84,25 @@
        (finally
          (stop-devcards build-or-id)))))
 
-  ([devcards-url ^Session session _ {:keys [init-hook] :as opts}]
+  ([devcards-url ^Session session _ {:keys [init-hook on-targets] :as opts}]
    (log/info "Navigating to" devcards-url)
    (.navigate session devcards-url)
    (.waitDocumentReady session 15000)
    (Thread/sleep 2000) ;; wait for devcards to load fully and render
    (when init-hook
      (init-hook session))
-   (let [target-urls (find-test-urls session)]
+   (let [target-urls (find-test-urls session)
+         targets (map (fn [target-url]
+                        {:url target-url
+                         :reference-file (str (subs target-url 3) ".png")})
+                      target-urls)
+         targets (if on-targets
+                   (on-targets targets)
+                   targets)]
      (log/infof "Found %s devcards to test" (count target-urls))
      (k/run-tests
       session
-      (map (fn [target-url]
-             {:url target-url
-              :reference-file (str (subs target-url 3) ".png")})
-           target-urls)
+      targets
       (-> opts
           (update :default-target assoc :root devcards-url))))))
 
