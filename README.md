@@ -125,6 +125,10 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
     :normalisations [:trim :crop]}               ;; normalisations to apply to expected and actual images before comparison, in order of application
  :normalisation-fns {:trim trim-fn               ;; normalisation functions, add any that you wish to use - see trim and crop for signature
                      :crop crop-fn}
+ :imagemagick-options
+   {:path-to-imagemagick nil                     ;; directory where binaries reside on linux, or executable on windows
+    :imagemagick-timeout 2000}                   ;; kill imagemagick calls that exceed this time, in ms
+
  :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc
 ```
 

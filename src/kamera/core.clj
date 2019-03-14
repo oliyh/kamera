@@ -11,10 +11,11 @@
            [java.io File]))
 
 (defn magick [operation
-               operation-args
-               {:keys [path-to-imagemagick
-                       imagemagick-timeout]}]
-  (let [executable (or (when path-to-imagemagick
+              operation-args
+              {:keys [imagemagick-options]}]
+  (let [{:keys [path-to-imagemagick
+                imagemagick-timeout]} imagemagick-options
+        executable (or (when path-to-imagemagick
                          (let [f (io/file path-to-imagemagick)]
                            (if (.isDirectory f)
                              [(.getAbsolutePath (io/file f operation))]
@@ -181,20 +182,20 @@
                   (:difference report))))))
 
 (def default-opts
-  {:path-to-imagemagick nil ;; directory where binaries reside on linux, or executable on windows
-   :imagemagick-timeout 2000
-   :default-target {;; :root e.g. "http://localhost:9500/devcards.html"
-                    ;; :url must be supplied on each target
-                    ;; :reference-file must be supplied on each target
-                    :metric "mae" ;; see https://imagemagick.org/script/command-line-options.php#metric
-                    :metric-threshold 0.01
-                    :load-timeout 60000
-                    :reference-directory "test-resources/kamera"
-                    :screenshot-directory "target/kamera"
-                    :normalisations [:trim :crop]}
-   :normalisation-fns {:trim trim-images
-                       :crop crop-images}
-   :chrome-options dcd/default-options ;; suggest you fix the width/height to make it device independant
+  {:default-target      {;; :root e.g. "http://localhost:9500/devcards.html"
+                         ;; :url must be supplied on each target
+                         ;; :reference-file must be supplied on each target
+                         :metric               "mae" ;; see https://imagemagick.org/script/command-line-options.php#metric
+                         :metric-threshold     0.01
+                         :load-timeout         60000
+                         :reference-directory  "test-resources/kamera"
+                         :screenshot-directory "target/kamera"
+                         :normalisations       [:trim :crop]}
+   :normalisation-fns   {:trim trim-images
+                         :crop crop-images}
+   :imagemagick-options {:path-to-imagemagick nil   ;; directory where binaries reside on linux, or executable on windows
+                         :imagemagick-timeout 2000} ;; kill imagemagick calls that exceed this time, in ms
+   :chrome-options      dcd/default-options ;; suggest you fix the width/height to make it device independant
    })
 
 ;; this is the general usecase of there is a website, i want to visit these links and do the comparison
