@@ -92,41 +92,48 @@
                       ^File actual
                       {:keys [metric screenshot-directory normalisations]}
                       opts]
-  (merge
-   {:metric 1
-    :expected (.getAbsolutePath expected)
-    :actual (.getAbsolutePath actual)}
-   (let [[^File expected-n ^File actual-n] (try (normalise-images normalisations expected actual opts)
-                                                (catch Throwable t
-                                                  (log/warn "Error normalising images" t)
-                                                  [expected actual]))
-         difference (append-suffix screenshot-directory expected ".difference")
-         {:keys [stdout stderr exit-code]}
-         (magick "compare"
-                 ["-verbose" "-metric" metric "-compose" "src"
-                  (.getAbsolutePath expected-n)
-                  (.getAbsolutePath actual-n)
-                  (.getAbsolutePath difference)]
-                 opts)
-         mean-absolute-error (when-let [e (last (re-find #"all: .* \((.*)\)" stderr))]
-                               (read-string e))]
+  (if-not (and (.exists expected) (.exists actual))
+    {:metric 1
+     :expected (str (when-not (.exists expected) "Missing - ")
+                    (.getAbsolutePath expected))
+     :actual (str (when-not (.exists actual) "Missing - ")
+                  (.getAbsolutePath actual))}
 
-     (merge-with concat
-                 (when (not= actual actual-n)
-                   {:actual-normalised (.getAbsolutePath actual-n)})
+    (merge
+     {:metric 1
+      :expected (.getAbsolutePath expected)
+      :actual (.getAbsolutePath actual)}
+     (let [[^File expected-n ^File actual-n] (try (normalise-images normalisations expected actual opts)
+                                                  (catch Throwable t
+                                                    (log/warn "Error normalising images" t)
+                                                    [expected actual]))
+           difference (append-suffix screenshot-directory expected ".difference")
+           {:keys [stdout stderr exit-code]}
+           (magick "compare"
+                   ["-verbose" "-metric" metric "-compose" "src"
+                    (.getAbsolutePath expected-n)
+                    (.getAbsolutePath actual-n)
+                    (.getAbsolutePath difference)]
+                   opts)
+           mean-absolute-error (when-let [e (last (re-find #"all: .* \((.*)\)" stderr))]
+                                 (read-string e))]
 
-                 (when (not= expected expected-n)
-                   {:expected-normalised (.getAbsolutePath expected-n)})
+       (merge-with concat
+                   (when (not= actual actual-n)
+                     {:actual-normalised (.getAbsolutePath actual-n)})
 
-                 (if (not= 2 exit-code)
-                   {:difference (.getAbsolutePath difference)}
-                   {:errors [(format "Error comparing images - ImageMagick exited with code %s \n stdout: %s \n stderr: %s"
-                                     exit-code stdout stderr)]})
+                   (when (not= expected expected-n)
+                     {:expected-normalised (.getAbsolutePath expected-n)})
 
-                 (if mean-absolute-error
-                   {:metric mean-absolute-error}
-                   {:errors [(format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
-                                     stdout stderr)]})))))
+                   (if (not= 2 exit-code)
+                     {:difference (.getAbsolutePath difference)}
+                     {:errors [(format "Error comparing images - ImageMagick exited with code %s \n stdout: %s \n stderr: %s"
+                                       exit-code stdout stderr)]})
+
+                   (if mean-absolute-error
+                     {:metric mean-absolute-error}
+                     {:errors [(format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
+                                       stdout stderr)]}))))))
 
 (defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory] :as target} opts]
   (let [data (.captureScreenshot session)
@@ -161,8 +168,10 @@
     (let [source-expected (io/file reference-directory reference-file)
           expected (let [ex (append-suffix screenshot-directory source-expected ".expected")]
                      (io/make-parents ex)
-                     (io/copy source-expected ex)
-                     ex)
+                     (if (.exists source-expected)
+                       (do (io/copy source-expected ex)
+                           ex)
+                       source-expected))
           actual (screenshot-target session target opts)
           {:keys [metric errors] :as report} (compare-images expected actual target opts)]
 

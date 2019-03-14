@@ -19,7 +19,7 @@ in a [blog post for JUXT](https://juxt.pro/blog/posts/cljs-apps.html).
 kamera has [figwheel-main](#figwheel+devcards) integration to allow it to find all your devcards automatically - just tell it where the reference versions reside and it will do everything for you. If you don't use figwheel or devcards, kamera can accept [a list of urls](#url-driven) for you to roll your own.
 
 - [Usage](#Usage)
-  - [Figwheel + devcards](#figwheel+devcards)
+  - [Figwheel + devcards](#figwheel-devcards)
   - [URL driven](#url-driven)
 - [Options](#options)
 - [Normalisation](#normalisation)
@@ -196,5 +196,4 @@ your option) any later version.
 
 
 ### todo
-- Example of how to generate the expected images on your first run (does this work?)
 - Ensure all the code examples and example output are correct
