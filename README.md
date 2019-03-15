@@ -29,6 +29,7 @@ kamera has [figwheel-main](#figwheel+devcards) integration to allow it to find a
 
 kamera uses ImageMagick for image processing and Chrome to capture screenshots.
 By default it looks for them on the path, but you can supply paths if they reside somewhere else - see the [options](#options).
+kamera lets you choose the metric for image comparison - [read more about the choices here](https://imagemagick.org/script/command-line-options.php#metric).
 
 ## Usage
 
@@ -121,14 +122,16 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
 ```clojure
 {:default-target                                 ;; default options for each image comparison
    {:root "http://localhost:9500/devcards.html"  ;; the common root url where all targets can be found
-    :metric "mae"                                ;; the imagemagick metric to use for comparison, see https://imagemagick.org/script/command-line-options.php#metric
+    :metric "mae"                                ;; the imagemagick metric to use for comparison
+                                                 ;; see https://imagemagick.org/script/command-line-options.php#metric
+
     :metric-threshold 0.01                       ;; difference metric above which comparison fails
     :load-timeout 60000                          ;; max time in ms to wait for target url to load
     :reference-directory "test-resources/kamera" ;; directory where reference images are store
-    :screenshot-directory "target/kamera"        ;; diredtory where screenshots and diffs should be saved
-    :normalisations [:trim :crop]}               ;; normalisations to apply to expected and actual images before comparison, in order of application
+    :screenshot-directory "target/kamera"        ;; directory where screenshots and diffs should be saved
+    :normalisations [:trim :crop]}               ;; normalisations to apply to images before comparison, in order of application
 
- :normalisation-fns                              ;; normalisation functions, add any that you wish to use - see trim and crop for signature
+ :normalisation-fns                              ;; normalisation functions, add your own if desired
    {:trim trim-fn
     :crop crop-fn}
 
@@ -136,7 +139,8 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
    {:path-to-imagemagick nil                     ;; directory where binaries reside on linux, or executable on windows
     :imagemagick-timeout 2000}                   ;; kill imagemagick calls that exceed this time, in ms
 
- :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc, see https://github.com/oliyh/doo-chrome-devprotocol
+ :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc
+                                                 ;; see https://github.com/oliyh/doo-chrome-devprotocol
 }
 ```
 
