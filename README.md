@@ -16,13 +16,19 @@ which you can use to display components in as many states as possible. If you en
 business logic you can ensure that refactoring will not affect them and prevent them becoming brittle - I outlined this approach
 in a [blog post for JUXT](https://juxt.pro/blog/posts/cljs-apps.html).
 
-kamera has [figwheel-main](#figwheel+devcards) integration to allow it to find all your devcards automatically - just tell it where the reference versions reside and it will do everything for you. If you don't use figwheel or devcards, kamera can accept [a list of urls](#url-driven) for you to roll your own.
+kamera has [figwheel-main](#figwheel+devcards) integration to allow it to find all your devcards automatically - just tell it where the reference images reside and it will do everything for you. If you don't use figwheel or devcards, kamera can accept [a list of urls](#url-driven) for you to roll your own.
 
+- [Prerequesites](#prerequesites)
 - [Usage](#Usage)
   - [Figwheel + devcards](#figwheel--devcards)
   - [URL driven](#url-driven)
 - [Options](#options)
 - [Normalisation](#normalisation)
+
+## Prerequesites
+
+kamera uses ImageMagick for image processing and Chrome to capture screenshots.
+By default it looks for them on the path, but you can supply paths if they reside somewhere else - see the [options](#options).
 
 ## Usage
 
@@ -50,7 +56,7 @@ test-resources
     └── example.core_test.png
 ```
 
-_You can generate these images initially by running kamera and copying the 'actual' files from the target directory into your reference directory__
+_You can generate these images initially by running kamera and copying the 'actual' files from the target directory into your reference directory_
 
 ... you can get kamera to screenshot the devcards and compare with the corresponding reference images with the following:
 
@@ -113,9 +119,7 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
 ## Options
 
 ```clojure
-{:path-to-imagemagick nil                        ;; directory where binaries reside on linux, or executable on windows
- :imagemagick-timeout 2000                       ;; die if any imagemagick operation takes longer than this, in ms
- :default-target                                 ;; default options for each image comparison
+{:default-target                                 ;; default options for each image comparison
    {:root "http://localhost:9500/devcards.html"  ;; the common root url where all targets can be found
     :metric "mae"                                ;; the imagemagick metric to use for comparison, see https://imagemagick.org/script/command-line-options.php#metric
     :metric-threshold 0.01                       ;; difference metric above which comparison fails
@@ -123,13 +127,17 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
     :reference-directory "test-resources/kamera" ;; directory where reference images are store
     :screenshot-directory "target/kamera"        ;; diredtory where screenshots and diffs should be saved
     :normalisations [:trim :crop]}               ;; normalisations to apply to expected and actual images before comparison, in order of application
- :normalisation-fns {:trim trim-fn               ;; normalisation functions, add any that you wish to use - see trim and crop for signature
-                     :crop crop-fn}
+
+ :normalisation-fns                              ;; normalisation functions, add any that you wish to use - see trim and crop for signature
+   {:trim trim-fn
+    :crop crop-fn}
+
  :imagemagick-options
    {:path-to-imagemagick nil                     ;; directory where binaries reside on linux, or executable on windows
     :imagemagick-timeout 2000}                   ;; kill imagemagick calls that exceed this time, in ms
 
- :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc
+ :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc, see https://github.com/oliyh/doo-chrome-devprotocol
+}
 ```
 
 ### devcards options
@@ -168,15 +176,15 @@ You can override the normalisations to each image, perhaps adding a `resize`:
 And provide the `resize` function in the options map:
 
 ```clojure
- :normalisation-fns {:trim   trim-fn
+{:normalisation-fns {:trim   trim-fn
                      :crop   crop-fn
-                     :resize resize-fn}
+                     :resize resize-fn}}
 ```
 
 The signature of `resize` should look like this:
 
 ```clojure
-(defn trim-images [^File expected ^File actual opts])
+(defn resize-images [^File expected ^File actual opts])
 ```
 
 And it should return `[expected actual]`. See the existing `trim` and `crop` functions for inspiration.

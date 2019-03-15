@@ -109,4 +109,4 @@
         (let [actual-files (.list (io/file target-dir))]
           (is (= ["example.another_core_test.actual.png"
                   "example.core_test.actual.png"]
-                 (into [] actual-files))))))))
+                 (into [] (sort actual-files)))))))))
