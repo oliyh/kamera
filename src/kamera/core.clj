@@ -159,7 +159,7 @@
 (defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory] :as target} opts]
   (resize-window-to-contents! session)
 
-  (let [data (.captureScreenshot session)
+  (let [data (.captureScreenshot session true) ;; hides scrollbar
         file (append-suffix screenshot-directory (io/file reference-file) ".actual")]
     (if data
       (do (io/make-parents file)
