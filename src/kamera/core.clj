@@ -139,7 +139,26 @@
                      {:errors [(format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
                                        stdout stderr)]}))))))
 
+(defn- body-dimensions [^Session session]
+  (let [dom (.getDOM (.getCommand session))
+        root-node (.getDocument dom)
+        body-node-id (.querySelector dom (.getNodeId root-node) "body")
+        box-model (.getBoxModel dom body-node-id nil nil)]
+    [(.getWidth box-model) (.getHeight box-model)]))
+
+(defn- resize-window-to-contents! [^Session session]
+  (let [[width height] (body-dimensions session)
+        emulation (.getEmulation (.getCommand session))
+        device-scale-factor 1.0
+        mobile? false]
+
+    (.setVisibleSize emulation width height)
+    (.setDeviceMetricsOverride emulation width height device-scale-factor mobile?)
+    (.setPageScaleFactor emulation 1.0)))
+
 (defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory] :as target} opts]
+  (resize-window-to-contents! session)
+
   (let [data (.captureScreenshot session)
         file (append-suffix screenshot-directory (io/file reference-file) ".actual")]
     (if data

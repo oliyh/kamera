@@ -2,6 +2,8 @@
 
 Visual testing tools for Clojure with [figwheel-main](https://github.com/bhauman/figwheel-main) integration.
 
+[![Clojars Project](https://img.shields.io/clojars/v/kamera.svg)](https://clojars.org/kamera)
+
 When data is represented visually for a human to view care must be taken to present it intuitively, accessibly
 and beautifully. This requires skill, time and above all human judgement.
 
