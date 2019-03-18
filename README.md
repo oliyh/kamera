@@ -213,3 +213,7 @@ your option) any later version.
 
 ### todo
 - Ensure all the code examples and example output are correct
+- Add use cases section
+ -- testing devcards
+ -- test multiple window sizes / mobile
+ -- driving through app in some selenium style test, want to take a quite snapshot and compare
