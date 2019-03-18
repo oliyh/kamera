@@ -63,11 +63,13 @@
     (extract-links html)))
 
 (def default-opts
-  (assoc k/default-opts
-         :devcards-path "devcards.html" ;; the relative path to the page where the devcards are hosted
-         :init-hook nil                 ;; (fn [session]) function run before attempting to scrape targets
-         :on-targets nil                ;; (fn [targets]) function called to allow changing the targets before the test is run
-         ))
+  (-> k/default-opts
+      (assoc :devcards-path "devcards.html" ;; the relative path to the page where the devcards are hosted
+             :init-hook nil                 ;; (fn [session]) function run before attempting to scrape targets
+             :on-targets nil                ;; (fn [targets]) function called to allow changing the targets before the test is run
+             )
+      ;; wait for devcards div to appear before taking screenshot
+      (assoc-in [:default-target :ready?] (k/element-exists? "#com-rigsomelight-devcards-main"))))
 
 (defn test-devcards
   ([build-or-id] (test-devcards build-or-id default-opts))

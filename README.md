@@ -129,7 +129,9 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
     :load-timeout 60000                          ;; max time in ms to wait for target url to load
     :reference-directory "test-resources/kamera" ;; directory where reference images are store
     :screenshot-directory "target/kamera"        ;; directory where screenshots and diffs should be saved
-    :normalisations [:trim :crop]}               ;; normalisations to apply to images before comparison, in order of application
+    :normalisations [:trim :crop]                ;; normalisations to apply to images before comparison, in order of application
+    :ready? (fn [session] ... )}                 ;; predicate that should return true when screenshot can be taken
+                                                 ;; see element-exists? as an example
 
  :normalisation-fns                              ;; normalisation functions, add your own if desired
    {:trim trim-fn

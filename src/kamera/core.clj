@@ -150,7 +150,11 @@
           file)
       (log/warn "Got no data from the screenshot for" reference-file))))
 
-(defn- screenshot-target [^Session session {:keys [root url load-timeout] :as target} opts]
+(defn element-exists? [selector]
+  (fn [^Session session]
+    (.matches session selector)))
+
+(defn- screenshot-target [^Session session {:keys [root url load-timeout ready?] :as target} opts]
   (.navigate session "about:blank") ;; solves a weird bug navigating directly between fragment urls, i think
   (.waitDocumentReady session (int 1000))
 
@@ -158,9 +162,10 @@
   (.waitDocumentReady session (int load-timeout))
 
   ;; hmm, this might need to be part of the target as well
-  (.waitUntil session (reify Predicate
-                        (test [this session]
-                          (.matches ^Session session "#com-rigsomelight-devcards-main"))))
+  (when ready?
+    (.waitUntil session (reify Predicate
+                          (test [this session]
+                            (ready? session)))))
 
   (Thread/sleep 500) ;; give devcards a chance to render
 
@@ -203,7 +208,10 @@
                          :load-timeout         60000
                          :reference-directory  "test-resources/kamera"
                          :screenshot-directory "target/kamera"
-                         :normalisations       [:trim :crop]}
+                         :normalisations       [:trim :crop]
+                         :ready? nil ;; (fn [session] ... ) a predicate that should return true when ready to take the screenshot
+                                     ;; see element-exists?
+                         }
    :normalisation-fns   {:trim trim-images
                          :crop crop-images}
    :imagemagick-options {:path-to-imagemagick nil   ;; directory where binaries reside on linux, or executable on windows
