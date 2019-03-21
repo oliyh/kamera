@@ -42,14 +42,17 @@
 
 (deftest example-figwheel-test
   (let [opts (-> kd/default-opts
-                 (assoc :init-hook (fn [session]
-                                     (is session "init-hook was called")))
-                 (assoc :on-targets (fn [targets]
-                                      (is (= 2 (count targets)) "on-targets was called")
-                                      targets))
+                 (update :devcards-options merge
+                         {:init-hook (fn [session]
+                                       (is session "init-hook was called"))
+                          :on-targets (fn [targets]
+                                        (is (= 2 (count targets)) "on-targets was called")
+                                        targets)})
                  (update :default-target merge {:reference-directory "example/test-resources/kamera"
-                                                :screenshot-directory target-dir})
-                 (assoc-in [:chrome-options :chrome-args] ["--headless" "--window-size=1280,1024"]))]
+                                                :screenshot-directory target-dir
+                                                :metric-threshold 0.05})
+                 (assoc-in [:chrome-options :chrome-args] [] ;;["--headless" "--window-size=1280,1024"]
+                           ))]
 
     (let [passes (atom [])
           failures (atom [])

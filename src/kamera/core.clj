@@ -15,7 +15,7 @@
               {:keys [imagemagick-options]}]
   (let [{:keys [path timeout]} imagemagick-options
         executable (or (when path
-                         (let [f (io/file path-to-imagemagick)]
+                         (let [f (io/file path)]
                            (if (.isDirectory f)
                              [(.getAbsolutePath (io/file f operation))]
                              [(.getAbsolutePath f) operation])))
@@ -170,7 +170,13 @@
 
 (defn element-exists? [selector]
   (fn [^Session session]
-    (.matches session selector)))
+    (let [result (.matches session selector)]
+      result)))
+
+(defn wait-for [^Session session pred-fn]
+  (.waitUntil session (reify Predicate
+                        (test [this session]
+                          (pred-fn session)))))
 
 (defn- screenshot-target [^Session session {:keys [root url load-timeout ready?] :as target} opts]
   (.navigate session "about:blank") ;; solves a weird bug navigating directly between fragment urls, i think
@@ -179,13 +185,10 @@
   (.navigate session (str root url))
   (.waitDocumentReady session (int load-timeout))
 
-  ;; hmm, this might need to be part of the target as well
   (when ready?
-    (.waitUntil session (reify Predicate
-                          (test [this session]
-                            (ready? session)))))
+    (wait-for session ready?))
 
-  (Thread/sleep 500) ;; give devcards a chance to render
+  (Thread/sleep 500) ;; small timeout for any js rendering
 
   (take-screenshot session target opts))
 

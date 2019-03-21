@@ -20,12 +20,13 @@
 (def build-arg->build-opts
   #'fig/start-build-arg->build-options)
 
-(defn- build-for [build-or-id {:keys [devcards-path]}]
+(defn- build-for [build-or-id {:keys [devcards-options]}]
   (-> (build-arg->build-opts build-or-id)
       (update :config merge
               {:mode :serve
                :open-url false
-               :connect-url (format "http://[[config-hostname]]:[[server-port]]/%s" devcards-path)})))
+               :connect-url (format "http://[[config-hostname]]:[[server-port]]/%s"
+                                    (:path devcards-options))})))
 
 (defn start-devcards [build-or-id opts]
   (let [build (build-for build-or-id opts)
@@ -62,14 +63,22 @@
         html (.getOuterHTML dom (.getNodeId root-node) nil nil)]
     (extract-links html)))
 
+(def devcards-list-ready?
+  (k/element-exists? ".com-rigsomelight-devcards-list-group"))
+
+(def devcards-page-ready?
+  (k/element-exists? ".com-rigsomelight-devcard"))
+
 (def default-opts
   (-> k/default-opts
-      (assoc :devcards-path "devcards.html" ;; the relative path to the page where the devcards are hosted
-             :init-hook nil                 ;; (fn [session]) function run before attempting to scrape targets
-             :on-targets nil                ;; (fn [targets]) function called to allow changing the targets before the test is run
-             )
+      (assoc :devcards-options
+             {:path "devcards.html" ;; the relative path to the page where the devcards are hosted
+              :init-hook nil ;; (fn [session]) function run before attempting to scrape targets
+              :on-targets nil ;; (fn [targets]) function called to allow changing the targets before the test is run
+              :timeout 60000  ;; time to wait for any devcards page to load
+              })
       ;; wait for devcards div to appear before taking screenshot
-      (assoc-in [:default-target :ready?] (k/element-exists? "#com-rigsomelight-devcards-main"))))
+      (assoc-in [:default-target :ready?] devcards-page-ready?)))
 
 (defn test-devcards
   ([build-or-id] (test-devcards build-or-id default-opts))
@@ -86,26 +95,29 @@
        (finally
          (stop-devcards build-or-id)))))
 
-  ([devcards-url ^Session session _ {:keys [init-hook on-targets] :as opts}]
-   (log/info "Navigating to" devcards-url)
-   (.navigate session devcards-url)
-   (.waitDocumentReady session 15000)
-   (Thread/sleep 2000) ;; wait for devcards to load fully and render
-   (when init-hook
-     (init-hook session))
-   (let [target-urls (find-test-urls session)
-         targets (map (fn [target-url]
-                        {:url target-url
-                         :reference-file (str (subs target-url 3) ".png")})
-                      target-urls)
-         targets (if on-targets
-                   (on-targets targets)
-                   targets)]
-     (log/infof "Found %s devcards to test" (count target-urls))
-     (k/run-tests
-      session
-      targets
-      (-> opts
-          (update :default-target assoc :root devcards-url))))))
+  ([devcards-url ^Session session _ {:keys [devcards-options] :as opts}]
+   (let [{:keys [init-hook on-targets]} devcards-options
+         load-timeout (get-in opts [:default-target :load-timeout])]
+     (log/info "Navigating to" devcards-url)
+     (.navigate session devcards-url)
+     (.waitDocumentReady session load-timeout)
+     (k/wait-for session devcards-list-ready?)
+     (Thread/sleep 500)
+     (when init-hook
+       (init-hook session))
+     (let [target-urls (find-test-urls session)
+           targets (map (fn [target-url]
+                          {:url target-url
+                           :reference-file (str (subs target-url 3) ".png")})
+                        target-urls)
+           targets (if on-targets
+                     (on-targets targets)
+                     targets)]
+       (log/infof "Found %s devcards to test" (count target-urls))
+       (k/run-tests
+        session
+        targets
+        (-> opts
+            (update :default-target assoc :root devcards-url)))))))
 
 ;; maybe it's possible to get chrome to execute a script that calls fighwheel in cljs to get a list of test namespaces rather than scraping?

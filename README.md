@@ -153,9 +153,11 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
 A few additional options exist if you are using the `kamera.devcards` namespace:
 
 ```clojure
-{:devcards-path "devcards.html"   ;; the relative path to the page where the devcards are hosted
- :init-hook (fn [session] ... )   ;; function run before attempting to scrape targets
- :on-targets (fn [targets] ... )} ;; function called to allow changing the targets before the test is run
+{:devcards-options
+  {:path "devcards.html"            ;; the relative path to the page where the devcards are hosted
+   :init-hook (fn [session] ... )   ;; function run before attempting to scrape targets
+   :on-targets (fn [targets] ... )} ;; function called to allow changing the targets before the test is run
+}
 ```
 
 ## Normalisation
