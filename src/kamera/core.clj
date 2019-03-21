@@ -43,38 +43,42 @@
     (when (zero? exit-code)
       (mapv #(Long/parseLong (string/trim %)) (string/split stdout #":")))))
 
-(defn- crop-images [^File expected ^File actual opts]
-  (let [expected-dimensions (dimensions expected opts)
-        actual-dimensions (dimensions actual opts)
-        [target-width target-height] [(apply min (map first [expected-dimensions actual-dimensions]))
-                                      (apply min (map second [expected-dimensions actual-dimensions]))]]
-    (mapv (fn [[^File file [width height]]]
-            (if (or (< target-width width)
-                    (< target-height height))
-              (let [cropped (append-suffix file ".cropped")]
-                (magick "convert"
-                        [(.getAbsolutePath file)
-                         "-crop"
-                         (format "%sx%s+0+0" target-width target-height)
-                         (.getAbsolutePath cropped)]
-                        opts)
-                cropped)
-              file))
-          [[expected expected-dimensions]
-           [actual actual-dimensions]])))
+(defn crop-images
+  ([expected actual opts] (crop-images expected actual opts "+0+0"))
+  ([^File expected ^File actual opts crop-anchor]
+   (let [expected-dimensions (dimensions expected opts)
+         actual-dimensions (dimensions actual opts)
+         [target-width target-height] [(apply min (map first [expected-dimensions actual-dimensions]))
+                                       (apply min (map second [expected-dimensions actual-dimensions]))]]
+     (mapv (fn [[^File file [width height]]]
+             (if (or (< target-width width)
+                     (< target-height height))
+               (let [cropped (append-suffix file ".cropped")]
+                 (magick "convert"
+                         [(.getAbsolutePath file)
+                          "-crop"
+                          (format "%sx%s%s" target-width target-height crop-anchor)
+                          (.getAbsolutePath cropped)]
+                         opts)
+                 cropped)
+               file))
+           [[expected expected-dimensions]
+            [actual actual-dimensions]]))))
 
-(defn- trim-images [^File expected ^File actual opts]
-  (mapv (fn [^File file]
-          (let [trimmed (append-suffix file ".trimmed")]
-            (magick "convert"
-                    [(.getAbsolutePath file)
-                     "-trim"
-                     "+repage"
-                     "-fuzz" "1%"
-                     (.getAbsolutePath trimmed)]
-                    opts)
-            trimmed))
-        [expected actual]))
+(defn trim-images
+  ([expected actual opts] (trim-images expected actual opts 1))
+  ([^File expected ^File actual opts fuzz-percent]
+   (mapv (fn [^File file]
+           (let [trimmed (append-suffix file ".trimmed")]
+             (magick "convert"
+                     [(.getAbsolutePath file)
+                      "-trim"
+                      "+repage"
+                      "-fuzz" (str fuzz-percent "%")
+                      (.getAbsolutePath trimmed)]
+                     opts)
+             trimmed))
+         [expected actual])))
 
 (defn- normalise-images [normalisations ^File expected ^File actual {:keys [normalisation-fns] :as opts}]
   (let [expected-dimensions (dimensions expected opts)

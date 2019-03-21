@@ -136,8 +136,8 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
                                                  ;; see element-exists? as an example
 
  :normalisation-fns                              ;; normalisation functions, add your own if desired
-   {:trim trim-fn
-    :crop crop-fn}
+   {:trim trim-images
+    :crop crop-images}
 
  :imagemagick-options
    {:path nil                                    ;; directory where binaries reside on linux, or executable on windows
