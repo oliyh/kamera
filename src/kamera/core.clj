@@ -13,9 +13,8 @@
 (defn magick [operation
               operation-args
               {:keys [imagemagick-options]}]
-  (let [{:keys [path-to-imagemagick
-                imagemagick-timeout]} imagemagick-options
-        executable (or (when path-to-imagemagick
+  (let [{:keys [path timeout]} imagemagick-options
+        executable (or (when path
                          (let [f (io/file path-to-imagemagick)]
                            (if (.isDirectory f)
                              [(.getAbsolutePath (io/file f operation))]
@@ -25,7 +24,7 @@
         process (apply sh/proc args)]
     {:stdout (sh/stream-to-string process :out)
      :stderr (sh/stream-to-string process :err)
-     :exit-code (sh/exit-code process imagemagick-timeout)}))
+     :exit-code (sh/exit-code process timeout)}))
 
 (defn ^File append-suffix
   ([^File file suffix] (append-suffix (.getParent file) file suffix))
@@ -233,8 +232,8 @@
                          }
    :normalisation-fns   {:trim trim-images
                          :crop crop-images}
-   :imagemagick-options {:path-to-imagemagick nil   ;; directory where binaries reside on linux, or executable on windows
-                         :imagemagick-timeout 2000} ;; kill imagemagick calls that exceed this time, in ms
+   :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
+                         :timeout 2000} ;; kill imagemagick calls that exceed this time, in ms
    :chrome-options      dcd/default-options ;; suggest you fix the width/height to make it device independant
    })
 

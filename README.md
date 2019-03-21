@@ -140,8 +140,8 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
     :crop crop-fn}
 
  :imagemagick-options
-   {:path-to-imagemagick nil                     ;; directory where binaries reside on linux, or executable on windows
-    :imagemagick-timeout 2000}                   ;; kill imagemagick calls that exceed this time, in ms
+   {:path nil                                    ;; directory where binaries reside on linux, or executable on windows
+    :timeout 2000}                               ;; kill imagemagick calls that exceed this time, in ms
 
  :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc
                                                  ;; see https://github.com/oliyh/doo-chrome-devprotocol
