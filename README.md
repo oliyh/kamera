@@ -26,7 +26,7 @@ and beautifully. This requires skill, time and above all human judgement.
 
 Once achieved you want to ensure it does not suffer regressions. kamera is a library designed to
 help you capture and compare screenshots of your application, failing if there is too much divergence between an expected
-reference image and the current display.
+reference image and the current display and creating a difference image to show you where.
 
 The best way to test visual representation is to create [devcards](https://github.com/bhauman/devcards)
 which you can use to display components in as many states as possible. If you ensure you separate rendering from
