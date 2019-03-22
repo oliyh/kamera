@@ -1,31 +1,37 @@
 # kamera
 
-Visual testing tools for Clojure with [figwheel-main](https://github.com/bhauman/figwheel-main) integration.
+Visual testing tools for Clojure with [figwheel-main](https://github.com/bhauman/figwheel-main)
+and [devcards](https://github.com/bhauman/devcards) integration.
+
+Give kamera some reference images and your devcards build and get automatic screenshots and comparisons to your references of all your devcards.
+If you don't use figwheel or devcards, kamera can accept [a list of urls](#core-api) for you to roll your own.
+
+![](doc/juxtaposed.png?raw=true)
 
 [![Clojars Project](https://img.shields.io/clojars/v/kamera.svg)](https://clojars.org/kamera)
 
-When data is represented visually for a human to view care must be taken to present it intuitively, accessibly
+- [Why?](#why)
+- [Prerequesites](#prerequesites)
+- [Usage](#Usage)
+  - [Figwheel + devcards](#figwheel--devcards)
+  - [Core API](#core-api)
+- [Options](#options)
+- [Normalisation](#normalisation)
+- [Example use cases](#example-use-cases)
+
+## Why?
+
+When data is represented visually for a human to view you must take to present it intuitively, accessibly
 and beautifully. This requires skill, time and above all human judgement.
 
 Once achieved you want to ensure it does not suffer regressions. kamera is a library designed to
 help you capture and compare screenshots of your application, failing if there is too much divergence between an expected
 reference image and the current display.
 
-![](doc/juxtaposed.png?raw=true)
-
 The best way to test visual representation is to create [devcards](https://github.com/bhauman/devcards)
 which you can use to display components in as many states as possible. If you ensure you separate rendering from
 business logic you can ensure that refactoring will not affect them and prevent them becoming brittle - I outlined this approach
 in a [blog post for JUXT](https://juxt.pro/blog/posts/cljs-apps.html).
-
-kamera has [figwheel-main](#figwheel+devcards) integration to allow it to find all your devcards automatically - just tell it where the reference images reside and it will do everything for you. If you don't use figwheel or devcards, kamera can accept [a list of urls](#url-driven) for you to roll your own.
-
-- [Prerequesites](#prerequesites)
-- [Usage](#Usage)
-  - [Figwheel + devcards](#figwheel--devcards)
-  - [URL driven](#url-driven)
-- [Options](#options)
-- [Normalisation](#normalisation)
 
 ## Prerequesites
 
@@ -69,12 +75,7 @@ _You can generate these images initially by running kamera and copying the 'actu
             [clojure.test :refer [deftest testing is]]))
 
 (deftest devcards-test
-  (let [build-id "dev"
-        opts (-> kd/default-opts
-                 (update :default-target merge {:reference-directory "test-resources/kamera"
-                                                :screenshot-directory "target/kamera"}))]
-
-    (kd/test-devcards build-id opts)))
+  (kd/test-devcards "dev" kd/default-opts))
 ```
 
 The output will look like this:
@@ -96,13 +97,17 @@ expected: (< metric metric-threshold)
   actual: (not (< 0.020624 0.01))
 ```
 
-The three files referenced will look like this:
+The target directory will contain an expected, actual and difference image for every devcard.
+The three files referenced above will look like this:
 
 ![](doc/juxtaposed.png?raw=true)
 
-### URL driven
+### Core API
 
-If you don't use figwheel or devcards you can still use kamera to take screenshots and compare them to reference images. You will have to provide a list of "targets" for kamera to test. Each target must provide a `:url` and `:reference-file` and can override any setting from the `:default-target` [options](#options).
+If you don't use figwheel or devcards you can still use kamera to take screenshots and compare them to reference images.
+
+You will have to provide a list of "targets" for kamera to test.
+Each target must provide a `:url` and `:reference-file` and can override any setting from the `:default-target` [options](#options).
 
 ```clojure
 (require '[kamera.core :as k])
@@ -116,6 +121,7 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
                :reference-file "help.png"
                :metric "RMSE"
                :normalisations [:trim]}]
+
              (assoc-in k/default-opts [:default-target :root] "http://localhost:9500"))
 ```
 
@@ -131,9 +137,9 @@ If you don't use figwheel or devcards you can still use kamera to take screensho
     :load-timeout 60000                          ;; max time in ms to wait for target url to load
     :reference-directory "test-resources/kamera" ;; directory where reference images are store
     :screenshot-directory "target/kamera"        ;; directory where screenshots and diffs should be saved
-    :normalisations [:trim :crop]                ;; normalisations to apply to images before comparison, in order of application
-    :ready? (fn [session] ... )}                 ;; predicate that should return true when screenshot can be taken
+    :ready? (fn [session] ... )                  ;; predicate that should return true when screenshot can be taken
                                                  ;; see element-exists? as an example
+    :normalisations [:trim :crop]}               ;; normalisations to apply to images before comparison, in order of application
 
  :normalisation-fns                              ;; normalisation functions, add your own if desired
    {:trim trim-images
@@ -162,9 +168,14 @@ A few additional options exist if you are using the `kamera.devcards` namespace:
 
 ## Normalisation
 
-When comparing images ImageMagick requires both input images to be the same dimensions. They can easily differ when changes are made to your application, across operating systems or browser versions. Normalisation is the process of resizing both the expected and the actual images in a way that keeps the images lined up with one another for the best comparison.
+When comparing images ImageMagick requires both input images to be the same dimensions.
+They can easily differ when changes are made to your application, across operating systems or browser versions.
+Normalisation is the process of resizing both the expected and the actual images in a way that keeps the images lined up with one another
+for the best comparison.
 
-The built-in normalisations are `trim` and `crop`. The former cuts out whitespace around image content and the latter crops the image canvas. They are run sequentially and each stage is output to the target directory, giving a set of images as follows:
+The built-in normalisations are `trim` and `crop`.
+The former cuts out whitespace around image content and the latter crops the image canvas.
+They are run sequentially and each stage is output to the target directory, giving a set of images as follows:
 
 ```bash
 kamera
@@ -199,6 +210,70 @@ The signature of `resize` should look like this:
 
 And it should return `[expected actual]`. See the existing `trim` and `crop` functions for inspiration.
 
+## Example use cases
+
+Here are some example use cases you may wish to consider in addition to the standard ones given above:
+
+### Desktop / tablet / mobile testing
+
+```clojure
+(ns example.devcards-test
+  (:require [kamera.devcards :as kd]
+            [clojure.test :refer [deftest testing is]]))
+
+(deftest desktop-test
+  (kd/test-devcards
+   "dev"
+   (-> kd/default-opts
+       (update :default-target merge
+               {:reference-directory "test-resources/kamera/desktop"}))))
+
+(deftest tablet-test
+  (kd/test-devcards
+   "dev"
+   (-> kd/default-opts
+       (update :default-target merge
+               {:reference-directory "test-resources/kamera/tablet"})
+       (assoc-in [:chrome-options :chrome-args] ["--headless" "--window-size=1024,768"]))))
+
+(deftest mobile-test
+  (kd/test-devcards
+   "dev"
+   (-> kd/default-opts
+       (update :default-target merge
+               {:reference-directory "test-resources/kamera/mobile"})
+       (assoc-in [:chrome-options :chrome-args] ["--headless" "--window-size=800,600"]))))
+```
+
+### Spot comparison during a webdriver test
+
+```clojure
+(ns example.devcards-test
+  (:require [kamera.core :as k]
+            [clojure.test :refer [deftest testing is]]))
+
+(deftest my-user-acceptance-test
+  (let [driver (init-driver {:host "localhost" :port 9500})
+        k-opts (assoc-in k/default-opts [:default-target :root] "http://localhost:9500")]
+
+    ;;;  webdriver stuff happens ...
+
+    (navigate! driver "/")
+
+    (k/run-tests [{:url (.getUrl driver)
+                   :reference-file "homepage-with-cookies-banner.png"}]
+                 k-opts)
+
+    (click! driver "#accept-cookies")
+
+    (k/run-tests [{:url (.getUrl driver)
+                   :reference-file "homepage-cookies-accepted.png"}]
+                 k-opts)
+
+    (.quit driver)))
+
+```
+
 ## Development
 
 Start a normal Clojure REPL
@@ -211,11 +286,3 @@ Copyright © 2018 oliyh
 
 Distributed under the Eclipse Public License either version 1.0 or (at
 your option) any later version.
-
-
-### todo
-- Ensure all the code examples and example output are correct
-- Add use cases section
- -- testing devcards
- -- test multiple window sizes / mobile
- -- driving through app in some selenium style test, want to take a quite snapshot and compare
