@@ -1,7 +1,10 @@
 (ns kamera.core-test
   (:require [clojure.test :refer [deftest testing is]]
             [clojure.java.io :as io]
-            [kamera.core :refer [compare-images dimensions default-opts append-suffix]]))
+            [kamera.core :refer [compare-images dimensions default-opts append-suffix]]
+            [kamera.core :as k]
+            [ring.adapter.jetty :refer [run-jetty]])
+  (:import [org.eclipse.jetty.server Server]))
 
 (defn- copy-target [src-file suffix]
   (let [src (io/file src-file)
@@ -163,3 +166,23 @@
   (let [renamed (append-suffix "target" (io/file "foo/bar/baz.png") "-diff")]
     (is (= "baz-diff.png" (.getName renamed)))
     (is (= "target" (.getParent renamed)))))
+
+(defn- ^Server start-jetty []
+  (run-jetty (fn [request]
+               {:status 200
+                :headers {"Content-Type" "text/html"}
+                :body "<h1>Hello World</h1>"})
+             {:port 3000
+              :join? false}))
+
+(deftest non-devcards-usecase-test
+  (let [server (start-jetty)]
+    (try
+      (k/run-tests
+       [{:url "/"
+         :reference-file "hello-world.png"}]
+       (-> k/default-opts
+           (update :default-target merge {:root "http://localhost:3000"
+                                          :reference-directory "test-resources"})))
+      (finally
+        (.stop server)))))
