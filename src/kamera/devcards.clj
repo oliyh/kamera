@@ -107,17 +107,11 @@
        (init-hook session))
      (let [target-urls (find-test-urls session)
            targets (map (fn [target-url]
-                          {:url target-url
+                          {:url (str devcards-url target-url)
                            :reference-file (str (subs target-url 3) ".png")})
                         target-urls)
            targets (if on-targets
                      (on-targets targets)
                      targets)]
        (log/infof "Found %s devcards to test" (count target-urls))
-       (k/run-tests
-        session
-        targets
-        (-> opts
-            (update :default-target assoc :root devcards-url)))))))
-
-;; maybe it's possible to get chrome to execute a script that calls fighwheel in cljs to get a list of test namespaces rather than scraping?
+       (k/run-tests session targets opts)))))

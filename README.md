@@ -260,15 +260,15 @@ Here are some example use cases you may wish to consider in addition to the stan
 
     (navigate! driver "/")
 
-    (k/run-tests [{:url (.getUrl driver)
-                   :reference-file "homepage-with-cookies-banner.png"}]
-                 k-opts)
+    (k/run-test {:url (.getUrl driver)
+                 :reference-file "homepage-with-cookies-banner.png"}
+                k-opts)
 
     (click! driver "#accept-cookies")
 
-    (k/run-tests [{:url (.getUrl driver)
-                   :reference-file "homepage-cookies-accepted.png"}]
-                 k-opts)
+    (k/run-test {:url (.getUrl driver)
+                 :reference-file "homepage-cookies-accepted.png"}
+                k-opts)
 
     (.quit driver)))
 

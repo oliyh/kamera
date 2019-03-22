@@ -178,11 +178,10 @@
 (deftest non-devcards-usecase-test
   (let [server (start-jetty)]
     (try
-      (k/run-tests
-       [{:url "/"
-         :reference-file "hello-world.png"}]
+      (k/run-test
+       {:url "http://localhost:3000"
+        :reference-file "hello-world.png"}
        (-> k/default-opts
-           (update :default-target merge {:root "http://localhost:3000"
-                                          :reference-directory "test-resources"})))
+           (update :default-target merge {:reference-directory "test-resources"})))
       (finally
         (.stop server)))))

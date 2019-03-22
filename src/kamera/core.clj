@@ -182,11 +182,11 @@
                         (test [this session]
                           (pred-fn session)))))
 
-(defn- screenshot-target [^Session session {:keys [root url load-timeout ready?] :as target} opts]
+(defn- screenshot-target [^Session session {:keys [url load-timeout ready?] :as target} opts]
   (.navigate session "about:blank") ;; solves a weird bug navigating directly between fragment urls, i think
   (.waitDocumentReady session (int 1000))
 
-  (.navigate session (str root url))
+  (.navigate session url)
   (.waitDocumentReady session (int load-timeout))
 
   (when ready?
@@ -196,8 +196,8 @@
 
   (take-screenshot session target opts))
 
-(defn test-target [session {:keys [root url reference-directory reference-file screenshot-directory metric-threshold] :as target} opts]
-  (testing (str root url)
+(defn test-target [session {:keys [url reference-directory reference-file screenshot-directory metric-threshold] :as target} opts]
+  (testing url
     (log/info "Testing" target)
     (let [source-expected (io/file reference-directory reference-file)
           expected (let [ex (append-suffix screenshot-directory source-expected ".expected")]
@@ -225,8 +225,7 @@
                   (:difference report))))))
 
 (def default-opts
-  {:default-target      {;; :root e.g. "http://localhost:9500/devcards.html"
-                         ;; :url must be supplied on each target
+  {:default-target      {;; :url must be supplied on each target
                          ;; :reference-file must be supplied on each target
                          :metric               "mae" ;; see https://imagemagick.org/script/command-line-options.php#metric
                          :metric-threshold     0.01
@@ -244,8 +243,15 @@
    :chrome-options      dcd/default-options ;; suggest you fix the width/height to make it device independant
    })
 
-;; this is the general usecase of there is a website, i want to visit these links and do the comparison
-;; could provide a callback to dynamically find the urls, references etc
+(defn run-test
+  ([target opts]
+   (dcd/with-chrome-session
+     (:chrome-options opts)
+     (fn [session _]
+       (run-test session target opts))))
+  ([session target opts]
+   (let [default-target (:default-target opts)]
+     (test-target session (merge default-target target) opts))))
 
 (defn run-tests
   ([targets opts]
@@ -253,29 +259,6 @@
      (:chrome-options opts)
      (fn [session _]
        (run-tests session targets opts))))
-  ([^Session session targets opts]
-   (let [default-target (:default-target opts)]
-     (doseq [target targets]
-       (test-target session (merge default-target target) opts)))))
-
-;; API
-;; test: figwheel build-id
-
-;; compare-images: expected/actual pair
-
-;; function to replace all the expecteds with current version
-
-;; non-devcards list of things
-;; a non-figwheel API where you provide a list of urls or a callback to discover them,
-;; a way to name them or a callback to provide the reference image.
-
-;; for use in selenium etc tests, so you can drive through the app and make UI assertions at any point
-;; a single call where you provide a url and a reference image
-
-;; could let user choose the metric too
-
-;; need to deal with files of different sizes
-;; -subimage-search is really slow
-;; cropping would be faster
-;; as would scaling
-;; probably these should be options for the user as well.
+  ([session targets opts]
+   (doseq [target targets]
+     (run-test session target opts))))
