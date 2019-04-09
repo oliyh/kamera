@@ -112,25 +112,24 @@ Each target must provide a `:url` and `:reference-file` and can override any set
 ```clojure
 (require '[kamera.core :as k])
 
-(k/run-tests [{:url "/"
+(k/run-tests [{:url "http://localhost:9500/"
                :reference-file "home.png"}
-              {:url "/preferences"
+
+              {:url "http://localhost:9500/preferences"
                :reference-file "preferences.png"
                :metric-threshold 0.2}
-              {:url "/help"
+
+              {:url "http://localhost:9500/help"
                :reference-file "help.png"
                :metric "RMSE"
-               :normalisations [:trim]}]
-
-             (assoc-in k/default-opts [:default-target :root] "http://localhost:9500"))
+               :normalisations [:trim]}])
 ```
 
 ## Options
 
 ```clojure
 {:default-target                                 ;; default options for each image comparison
-   {:root "http://localhost:9500/devcards.html"  ;; the common root url where all targets can be found
-    :metric "mae"                                ;; the imagemagick metric to use for comparison
+   {:metric "mae"                                ;; the imagemagick metric to use for comparison
                                                  ;; see https://imagemagick.org/script/command-line-options.php#metric
 
     :metric-threshold 0.01                       ;; difference metric above which comparison fails
@@ -253,8 +252,7 @@ Here are some example use cases you may wish to consider in addition to the stan
             [clojure.test :refer [deftest testing is]]))
 
 (deftest my-user-acceptance-test
-  (let [driver (init-driver {:host "localhost" :port 9500})
-        k-opts (assoc-in k/default-opts [:default-target :root] "http://localhost:9500")]
+  (let [driver (init-driver {:host "localhost" :port 9500})]
 
     ;;;  webdriver stuff happens ...
 
@@ -262,13 +260,13 @@ Here are some example use cases you may wish to consider in addition to the stan
 
     (k/run-test {:url (.getUrl driver)
                  :reference-file "homepage-with-cookies-banner.png"}
-                k-opts)
+                k/default-opts)
 
     (click! driver "#accept-cookies")
 
     (k/run-test {:url (.getUrl driver)
                  :reference-file "homepage-cookies-accepted.png"}
-                k-opts)
+                k/default-opts)
 
     (.quit driver)))
 
