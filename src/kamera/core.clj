@@ -207,9 +207,9 @@
                            ex)
                        source-expected))
           actual (screenshot-target session target opts)
-          {:keys [metric errors] :as report} (compare-images expected actual target opts)]
+          {:keys [metric errors] :as result} (compare-images expected actual target opts)]
 
-      (log/info "Test result" report)
+      (log/info "Test result" result)
 
       (when (not-empty errors)
         (log/error (format "Errors occurred testing %s:" url))
@@ -220,9 +220,11 @@
           (format "%s has diverged from reference by %s, please compare \nExpected: %s \nActual: %s \nDifference: %s"
                   reference-file
                   metric
-                  (or (:expected-normalised report) (:expected report))
-                  (or (:actual-normalised report) (:actual report))
-                  (:difference report))))))
+                  (or (:expected-normalised result) (:expected result))
+                  (or (:actual-normalised result) (:actual result))
+                  (:difference result)))
+
+      result)))
 
 (def default-opts
   {:default-target      {;; :url must be supplied on each target
@@ -260,5 +262,5 @@
      (fn [session _]
        (run-tests session targets opts))))
   ([session targets opts]
-   (doseq [target targets]
-     (run-test session target opts))))
+   (mapv (fn [target] (run-test session target opts))
+         targets)))
