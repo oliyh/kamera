@@ -1,5 +1,6 @@
 (ns kamera.core
-  (:require [me.raynes.conch.low-level :as sh]
+  (:require [kamera.report :as report]
+            [me.raynes.conch.low-level :as sh]
             [clojure.java.io :as io]
             [clojure.test :refer [testing is]]
             [figwheel.main.api :as fig-api]
@@ -207,7 +208,11 @@
                            ex)
                        source-expected))
           actual (screenshot-target session target opts)
-          {:keys [metric errors] :as result} (compare-images expected actual target opts)]
+          {:keys [metric errors] :as result} (compare-images expected actual target opts)
+          passed? (< metric metric-threshold)
+          result (merge result
+                        {:passed? passed?
+                         :target target})]
 
       (log/info "Test result" result)
 
@@ -216,7 +221,7 @@
         (doseq [error errors]
           (log/error error)))
 
-      (is (< metric metric-threshold)
+      (is passed?
           (format "%s has diverged from reference by %s, please compare \nExpected: %s \nActual: %s \nDifference: %s"
                   reference-file
                   metric
@@ -243,6 +248,8 @@
    :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
                          :timeout 2000} ;; kill imagemagick calls that exceed this time, in ms
    :chrome-options      dcd/default-options ;; suggest you fix the width/height to make it device independant
+   :report              {:enabled? true ;; write a report after testing
+                         }
    })
 
 (defn run-test
@@ -262,5 +269,8 @@
      (fn [session _]
        (run-tests session targets opts))))
   ([session targets opts]
-   (mapv (fn [target] (run-test session target opts))
-         targets)))
+   (let [results (mapv (fn [target] (run-test session target opts))
+                       targets)]
+     (when (get-in opts [:report :enabled?])
+       (report/write-report! results opts))
+     results)))
