@@ -10,35 +10,46 @@
   (let [child-style {:style {:flex-grow 0
                              :flex-shrink 0
                              :flex-basis "33%"
-                             :text-align "center"}}]
-    [:div.result {:key (:expected result)}
+                             :text-align "center"}}
+        chain (:normalisation-chain result)]
+    [:div.result
 
-     [:h4 (:expected result) " - " (if (:passed? result) "passed" "failed")]
+     [:h4 [:a {:name (:expected result)} (:expected result)]
+      " - " (if (:passed? result) "passed" "failed")]
 
      [:div.detail
       (get-in result [:target :metric]) ": "
       (:metric result) " actual / "
       (get-in result [:target :metric-threshold]) " expected"]
 
-     [:div.comparison {:style {:display "flex"
-                               :flex-direction "row"
-                               :flex-wrap "nowrap"
-                               :justify-content "center"
-                               :align-items "flex-start"}}
-      [:div.expected child-style
-       [:h6 "Expected"]
-       [:img {:src (:expected result)
-              :style {:width "100%"}}]]
+     [:div.normalisation-chain
+      (for [{:keys [expected actual normalisation] :as n} chain
+            :let [show-diff? (= n (last chain))]]
 
-      [:div.difference child-style
-       [:h6 "Difference"]
-       [:img {:src (:difference result)
-              :style {:width "100%"}}]]
+        [:div.normalisation {:key normalisation}
+         [:h6 (name normalisation)]
+         [:div.comparison {:style {:display "flex"
+                                   :flex-direction "row"
+                                   :flex-wrap "nowrap"
+                                   :justify-content "center"
+                                   :align-items "flex-start"}}
 
-      [:div.actual child-style
-       [:h6 "Actual"]
-       [:img {:src (:actual result)
-              :style {:width "100%"}}]]]]))
+          [:div.expected child-style
+           [:h6 "Expected"]
+           [:img {:src expected
+                  :style {:width "100%"}}]]
+
+          [:div.difference child-style
+           (when show-diff?
+             [:<>
+              [:h6 "Difference"]
+              [:img {:src (:difference result)
+                     :style {:width "100%"}}]])]
+
+          [:div.actual child-style
+           [:h6 "Actual"]
+           [:img {:src actual
+                  :style {:width "100%"}}]]]])]]))
 
 (defn- hello-world []
   (let [{:keys [results]} @results-store]
@@ -48,8 +59,14 @@
      [:div "Ran " (count results) " tests"]
      [:div "Passed: " (count (filter :passed? results))]
      [:div "Failed: " (count (remove :passed? results))]
+     [:div [:ul
+            (doall (for [{:keys [expected]} results]
+                     [:li {:key expected}
+                      [:a {:href (str "#" expected)}
+                       expected]]))]]
 
      (doall (for [result results]
+              ^{:key (:expected result)}
               [test-result result]))]))
 
 (defn- mount-app []
