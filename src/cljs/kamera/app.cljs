@@ -1,4 +1,4 @@
-(ns kamera.app
+(ns ^:figwheel-hooks kamera.app
   (:require [reagent.core :as reagent]))
 
 (def app (js/document.getElementById "app"))
@@ -12,7 +12,7 @@
 (defn- init []
   (mount-app))
 
-(defn on-figwheel-reload []
+(defn ^:after-load on-figwheel-reload []
   (mount-app))
 
 (.addEventListener js/document "DOMContentLoaded" init)
