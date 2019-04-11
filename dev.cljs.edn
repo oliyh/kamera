@@ -1,0 +1,6 @@
+^{:watch-dirs ["test/cljs" "src/cljs"]
+  :css-dirs ["resources/public/css"]
+  :auto-testing true
+  :extra-main-files {:cards {:main kamera.cards}}}
+{:main kamera.app
+ :devcards true}

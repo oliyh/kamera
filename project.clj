@@ -15,11 +15,22 @@
                  [doo-chrome-devprotocol "0.1.0"]
                  [hickory "0.7.1"]]
   :monkeypatch-clojure-test false
+  :source-paths ["src/clj"]
+  :test-paths ["test/clj"]
   :profiles {:provided {:dependencies [[org.clojure/clojure "1.10.0"]
                                        [org.clojure/clojurescript "1.10.339"]
                                        [org.clojure/tools.reader "1.3.2"]
                                        [com.bhauman/figwheel-main "0.1.9"]]}
-             :dev {:dependencies [;; required for example project
+             :dev {:dependencies [;; required for report app & example project
                                   [reagent "0.8.1"]
-                                  [devcards "0.2.6"]]
-                   :resource-paths ["example/resources"]}})
+                                  [devcards "0.2.6"]
+                                  [binaryage/devtools "0.8.3"]]
+                   :source-paths ["src/cljs"]
+                   :test-paths ["test/cljs"]
+                   :resource-paths ["target" "example/resources"]
+                   :clean-targets ^{:protect false} ["target"]}}
+
+  :aliases {"fig"       ["trampoline" "run" "-m" "figwheel.main"]
+            "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]
+            "fig:min"   ["run" "-m" "figwheel.main" "-O" "advanced" "-bo" "dev"]
+            "fig:test"  ["run" "-m" "figwheel.main" "-co" "test.cljs.edn" "-m" kamera.test-runner]})
