@@ -28,7 +28,10 @@
                    :source-paths ["src/cljs"]
                    :test-paths ["test/cljs"]
                    :resource-paths ["target" "example/resources"]
-                   :clean-targets ^{:protect false} ["target"]}}
+                   :clean-targets ^{:protect false} ["target"]
+                   :plugins [[lein-sass "0.4.0"]]
+                   :sass {:src "resources/sass"
+                          :output-directory "resources/public/css"}}}
 
   :aliases {"fig"       ["trampoline" "run" "-m" "figwheel.main"]
             "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]

@@ -36,20 +36,17 @@
 
           [:div.expected child-style
            [:h6 "Expected"]
-           [:img {:src expected
-                  :style {:width "100%"}}]]
+           [:img {:src expected}]]
 
           [:div.difference child-style
            (when show-diff?
              [:<>
               [:h6 "Difference"]
-              [:img {:src (:difference result)
-                     :style {:width "100%"}}]])]
+              [:img {:src (:difference result)}]])]
 
           [:div.actual child-style
            [:h6 "Actual"]
-           [:img {:src actual
-                  :style {:width "100%"}}]]]])]]))
+           [:img {:src actual}]]]])]]))
 
 (defn- hello-world []
   (let [{:keys [results]} @results-store]

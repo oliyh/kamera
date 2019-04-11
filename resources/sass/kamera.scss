@@ -1,0 +1,21 @@
+body {
+    background-color: darkgrey;
+    padding: 12px;
+}
+
+.detail {
+
+}
+
+.comparison {
+
+    .expected, .difference, .actual {
+        background-color: white;
+        padding: 12px 0;
+    }
+
+    img {
+        border: 1px dashed black;
+        max-width: calc(100% - 24px);
+    }
+}
