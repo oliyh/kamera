@@ -4,7 +4,6 @@
 
 ;; todo results need to have:
 ;; - a name (rather than just a filename) - can be optional
-;; - all the normalisation steps, with names
 
 (defn- relativize-file [reference-path file]
   (when file
@@ -12,12 +11,15 @@
                       (.toPath (.getAbsoluteFile (io/file file)))))))
 
 (defn- relativize-files [reference-path results]
-  (map (fn [result]
-         (reduce (fn [r k]
-                   (update r k (partial relativize-file reference-path)))
-                 result
-                 [:expected :expected-normalised :actual :actual-normalised :difference]))
-       results))
+  (mapv (fn [result]
+          (-> (reduce (fn [r k]
+                        (if (contains? r k)
+                          (update r k (partial relativize-file reference-path))
+                          r))
+                      result
+                      [:expected :actual :difference])
+              (update :normalisation-chain (partial relativize-files reference-path))))
+        results))
 
 (defn write-report! [results opts]
   (let [target-dir (get-in opts [:default-target :screenshot-directory])

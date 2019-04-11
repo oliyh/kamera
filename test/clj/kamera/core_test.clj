@@ -18,10 +18,13 @@
 (deftest image-comparison-test
   (testing "can compare identical images"
     (let [expected (io/file "test-resources/a.png")]
-      (is (= {:metric     0
-              :expected   (.getAbsolutePath expected)
-              :actual     (.getAbsolutePath expected)
-              :difference (.getAbsolutePath (io/file "target/a.difference.png"))}
+      (is (= {:metric              0
+              :expected            (.getAbsolutePath expected)
+              :actual              (.getAbsolutePath expected)
+              :difference          (.getAbsolutePath (io/file "target/a.difference.png"))
+              :normalisation-chain [{:normalisation :original
+                                     :expected (.getAbsolutePath expected)
+                                     :actual (.getAbsolutePath expected)}]}
 
              (compare-images expected
                              expected
@@ -33,10 +36,13 @@
           actual (io/file "test-resources/b.png")]
 
       (testing "with the default metric"
-        (is (= {:metric     4.84915E-4
-                :expected   (.getAbsolutePath expected)
-                :actual     (.getAbsolutePath actual)
-                :difference (.getAbsolutePath (io/file "target/a.difference.png"))}
+        (is (= {:metric              4.84915E-4
+                :expected            (.getAbsolutePath expected)
+                :actual              (.getAbsolutePath actual)
+                :difference          (.getAbsolutePath (io/file "target/a.difference.png"))
+                :normalisation-chain [{:normalisation :original
+                                       :expected (.getAbsolutePath expected)
+                                       :actual (.getAbsolutePath actual)}]}
 
                (compare-images expected
                                actual
@@ -44,10 +50,13 @@
                                default-opts))))
 
       (testing "with the RMSE metric"
-        (is (= {:metric     0.0142263
-                :expected   (.getAbsolutePath expected)
-                :actual     (.getAbsolutePath actual)
-                :difference (.getAbsolutePath (io/file "target/a.difference.png"))}
+        (is (= {:metric              0.0142263
+                :expected            (.getAbsolutePath expected)
+                :actual              (.getAbsolutePath actual)
+                :difference          (.getAbsolutePath (io/file "target/a.difference.png"))
+                :normalisation-chain [{:normalisation :original
+                                       :expected (.getAbsolutePath expected)
+                                       :actual (.getAbsolutePath actual)}]}
 
                (compare-images expected
                                actual
@@ -65,11 +74,19 @@
         (is (< expected-height actual-height))
 
         (is (= {:metric              0
-                :expected            (.getAbsolutePath expected)
-                :expected-normalised (.getAbsolutePath (io/file "target/c.expected.trimmed.png"))
-                :actual              (.getAbsolutePath actual)
-                :actual-normalised   (.getAbsolutePath (io/file "target/a.actual.trimmed.cropped.png"))
-                :difference          (.getAbsolutePath (io/file "target/c.expected.difference.png"))}
+                :expected            (.getAbsolutePath (io/file "target/c.expected.trimmed.png"))
+                :actual              (.getAbsolutePath (io/file "target/a.actual.trimmed.cropped.png"))
+                :difference          (.getAbsolutePath (io/file "target/c.expected.difference.png"))
+                :normalisation-chain
+                [{:normalisation :original
+                  :expected      (.getAbsolutePath expected)
+                  :actual        (.getAbsolutePath actual)}
+                 {:normalisation :trim
+                  :expected      (.getAbsolutePath (io/file "target/c.expected.trimmed.png"))
+                  :actual        (.getAbsolutePath (io/file "target/a.actual.trimmed.png"))}
+                 {:normalisation :crop
+                  :expected      (.getAbsolutePath (io/file "target/c.expected.trimmed.png"))
+                  :actual        (.getAbsolutePath (io/file "target/a.actual.trimmed.cropped.png"))}]}
 
                (compare-images expected
                                actual
@@ -86,11 +103,19 @@
         (is (< actual-height expected-height))
 
         (is (= {:metric              0
-                :expected            (.getAbsolutePath expected)
-                :expected-normalised (.getAbsolutePath (io/file "target/a.expected.trimmed.cropped.png"))
-                :actual              (.getAbsolutePath actual)
-                :actual-normalised   (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))
-                :difference          (.getAbsolutePath (io/file "target/a.expected.difference.png"))}
+                :expected            (.getAbsolutePath (io/file "target/a.expected.trimmed.cropped.png"))
+                :actual              (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))
+                :difference          (.getAbsolutePath (io/file "target/a.expected.difference.png"))
+                :normalisation-chain
+                [{:normalisation :original
+                  :expected      (.getAbsolutePath expected)
+                  :actual        (.getAbsolutePath actual)}
+                 {:normalisation :trim
+                  :expected      (.getAbsolutePath (io/file "target/a.expected.trimmed.png"))
+                  :actual        (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))}
+                 {:normalisation :crop
+                  :expected      (.getAbsolutePath (io/file "target/a.expected.trimmed.cropped.png"))
+                  :actual        (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))}]}
 
                (compare-images expected
                                actual
@@ -111,10 +136,15 @@
                                    (assoc default-target :normalisations [:trim])
                                    default-opts)]
         (is (= {:metric              1
-                :expected            (.getAbsolutePath expected)
-                :expected-normalised (.getAbsolutePath (io/file "target/a.expected.trimmed.png"))
-                :actual              (.getAbsolutePath actual)
-                :actual-normalised   (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))}
+                :expected            (.getAbsolutePath (io/file "target/a.expected.trimmed.png"))
+                :actual              (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))
+                :normalisation-chain
+                [{:normalisation :original
+                  :expected      (.getAbsolutePath expected)
+                  :actual        (.getAbsolutePath actual)}
+                 {:normalisation :trim
+                  :expected      (.getAbsolutePath (io/file "target/a.expected.trimmed.png")),
+                  :actual        (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))}]}
                (dissoc result :errors)))
 
         (is (:errors result)))))
@@ -142,12 +172,20 @@
                                  actual
                                  default-target
                                  default-opts)]
-      (is (= {:metric 0.00189661,
-              :expected (.getAbsolutePath expected)
-              :actual (.getAbsolutePath actual)
-              :actual-normalised (.getAbsolutePath (append-suffix actual ".trimmed.cropped"))
-              :expected-normalised (.getAbsolutePath (append-suffix expected ".trimmed.cropped"))
-              :difference (.getAbsolutePath (append-suffix expected ".difference"))}
+      (is (= {:metric              0.00189661,
+              :actual              (.getAbsolutePath (append-suffix actual ".trimmed.cropped"))
+              :expected            (.getAbsolutePath (append-suffix expected ".trimmed.cropped"))
+              :difference          (.getAbsolutePath (append-suffix expected ".difference"))
+              :normalisation-chain
+              [{:normalisation :original
+                :expected      (.getAbsolutePath (io/file "target/d1.expected.png"))
+                :actual        (.getAbsolutePath (io/file "target/d2.actual.png"))}
+               {:normalisation :trim
+                :expected      (.getAbsolutePath (io/file "target/d1.expected.trimmed.png"))
+                :actual        (.getAbsolutePath (io/file "target/d2.actual.trimmed.png"))}
+               {:normalisation :crop
+                :expected      (.getAbsolutePath (io/file "target/d1.expected.trimmed.cropped.png"))
+                :actual        (.getAbsolutePath (io/file "target/d2.actual.trimmed.cropped.png"))}]}
 
              result)))))
 

@@ -81,16 +81,27 @@
              trimmed))
          [expected actual])))
 
+(defn- normalisation-chain [^File expected ^File actual]
+  [{:normalisation :original
+    :expected expected
+    :actual actual}])
+
 (defn- normalise-images [normalisations ^File expected ^File actual {:keys [normalisation-fns] :as opts}]
   (let [expected-dimensions (dimensions expected opts)
-        actual-dimensions (dimensions actual opts)]
+        actual-dimensions (dimensions actual opts)
+        chain (normalisation-chain expected actual)]
     (if (and expected-dimensions actual-dimensions
              (not= expected-dimensions actual-dimensions))
-      (reduce (fn [[e a] f]
-                (f e a opts))
-              [expected actual]
-              (map normalisation-fns normalisations))
-      [expected actual])))
+      (reduce (fn [acc norm-key]
+                (let [{:keys [expected actual]} (last acc)
+                      norm-fn (get normalisation-fns norm-key)
+                      [e' a'] (norm-fn expected actual opts)]
+                  (conj acc {:normalisation norm-key
+                             :expected e'
+                             :actual a'})))
+              chain
+              normalisations)
+      chain)))
 
 (defn compare-images [^File expected
                       ^File actual
@@ -111,27 +122,30 @@
      {:metric 1
       :expected (.getAbsolutePath expected)
       :actual (.getAbsolutePath actual)}
-     (let [[^File expected-n ^File actual-n] (try (normalise-images normalisations expected actual opts)
-                                                  (catch Throwable t
-                                                    (log/warn "Error normalising images" t)
-                                                    [expected actual]))
-           difference (append-suffix screenshot-directory expected ".difference")
+     (let [difference (append-suffix screenshot-directory expected ".difference")
+           normalisation-chain (try (normalise-images normalisations expected actual opts)
+                                    (catch Throwable t
+                                      (log/warn "Error normalising images" t)
+                                      (normalisation-chain expected actual)))
+           {:keys [^File expected ^File actual]} (last normalisation-chain)
            {:keys [stdout stderr exit-code]}
            (magick "compare"
                    ["-verbose" "-metric" metric "-compose" "src"
-                    (.getAbsolutePath expected-n)
-                    (.getAbsolutePath actual-n)
+                    (.getAbsolutePath expected)
+                    (.getAbsolutePath actual)
                     (.getAbsolutePath difference)]
                    opts)
            mean-absolute-error (when-let [e (last (re-find #"all: .* \((.*)\)" stderr))]
                                  (read-string e))]
 
        (merge-with concat
-                   (when (not= actual actual-n)
-                     {:actual-normalised (.getAbsolutePath actual-n)})
-
-                   (when (not= expected expected-n)
-                     {:expected-normalised (.getAbsolutePath expected-n)})
+                   {:actual (.getAbsolutePath actual)
+                    :expected (.getAbsolutePath expected)
+                    :normalisation-chain (map (fn [n]
+                                                (-> n
+                                                    (update :expected #(.getAbsolutePath %))
+                                                    (update :actual #(.getAbsolutePath %))))
+                                              normalisation-chain)}
 
                    (if (not= 2 exit-code)
                      {:difference (.getAbsolutePath difference)}
