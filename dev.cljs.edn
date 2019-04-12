@@ -4,4 +4,5 @@
   :auto-testing true
   :extra-main-files {:cards {:main kamera.cards}}}
 {:main kamera.app
+ :output-to "target/public/kamera.js"
  :devcards true}

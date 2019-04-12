@@ -4,6 +4,7 @@
 
 ;; todo results need to have:
 ;; - a name (rather than just a filename) - can be optional
+;; probably do have to serialise the results.edn into the html because can't load it off disk!
 
 (defn- relativize-file [reference-path file]
   (when file
@@ -21,19 +22,23 @@
               (update :normalisation-chain (partial relativize-files reference-path))))
         results))
 
+(defn- publish-resource [target-dir resource-path]
+  (let [target (io/file target-dir resource-path)]
+    (.delete target)
+    (io/make-parents target)
+    (io/copy (io/file (io/resource (str "public/" resource-path)))
+             target)))
+
 (defn write-report! [results opts]
   (let [target-dir (get-in opts [:default-target :screenshot-directory])
         results (relativize-files target-dir results)]
     (spit (io/file target-dir "results.edn")
           (with-out-str (pprint {:results results})))
 
-    (.delete (io/file target-dir "index.html"))
-    (io/copy (io/file (io/resource "public/index.html"))
-             (io/file target-dir "index.html"))
-
-    (.delete (io/file target-dir "kamera.js"))
-    (io/copy (io/file (io/resource "public/kamera.js"))
-             (io/file target-dir "kamera.js"))))
+    (doseq [r ["index.html"
+               "css/kamera.css"
+               "kamera.js"]]
+      (publish-resource target-dir r))))
 
 (comment
   (def r (let [server (start-jetty)]
