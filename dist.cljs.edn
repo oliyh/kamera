@@ -1,0 +1,4 @@
+{:main kamera.app
+ :output-to "resources/public/kamera.js"
+ :parallel-build true
+ :optimizations :advanced}

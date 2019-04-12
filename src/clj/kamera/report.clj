@@ -26,9 +26,14 @@
         results (relativize-files target-dir results)]
     (spit (io/file target-dir "results.edn")
           (with-out-str (pprint {:results results})))
+
     (.delete (io/file target-dir "index.html"))
     (io/copy (io/file (io/resource "public/index.html"))
-             (io/file target-dir "index.html"))))
+             (io/file target-dir "index.html"))
+
+    (.delete (io/file target-dir "kamera.js"))
+    (io/copy (io/file (io/resource "public/kamera.js"))
+             (io/file target-dir "kamera.js"))))
 
 (comment
   (def r (let [server (start-jetty)]
