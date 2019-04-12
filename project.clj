@@ -27,7 +27,7 @@
                                   [binaryage/devtools "0.8.3"]]
                    :source-paths ["src/cljs"]
                    :test-paths ["test/cljs"]
-                   :resource-paths ["target" "example/resources"]
+                   :resource-paths ["resources" "target" "example/resources"]
                    :clean-targets ^{:protect false} ["target"]
                    :plugins [[lein-sass "0.4.0"]]
                    :sass {:src "resources/sass"

@@ -1,21 +1,105 @@
+@import 'material.min';
+@import 'material-icons';
+
 body {
-    background-color: darkgrey;
-    padding: 12px;
+    background-color: lightgrey;
+}
+
+#app {
+    margin: 24px;
+
+    .title {
+        background-color: white;
+        border-radius: 48px;
+        width: 100%;
+        text-align: center;
+        box-sizing: border-box;
+    }
 }
 
 .detail {
 
 }
 
-.comparison {
+.mdl-card__title-text i.material-icons {
+    width: 36px;
+}
 
-    .expected, .difference, .actual {
-        background-color: white;
-        padding: 12px 0;
+.test-result, .normalisation-chain, .mdl-card__supporting-text {
+    box-sizing: border-box;
+    width: 100%;
+}
+
+.summary {
+    width: 100%;
+    margin-bottom: 24px;
+}
+
+.test-result {
+
+    .detail {
+        padding: 12px;
     }
 
-    img {
-        border: 1px dashed black;
-        max-width: calc(100% - 24px);
+    .comparison-titles {
+        text-align: center;
+        h6 {
+            margin: 0;
+        }
+    }
+
+    .normalisation {
+        border-left: 1px solid black;
+    }
+
+    .comparison {
+        transition: height 0.5s ease-in-out;
+        height: initial;
+
+        &.contracted {
+            display: none;
+        }
+    }
+
+    .normalisation, .final-result {
+        margin-left: 24px;
+        min-height: 24px;
+
+        .step-name:before {
+            content: '';
+            background-color: white;
+            height: 15px;
+            width: 15px;
+            border: 3px solid black;
+            border-radius: 15px;
+            display: inline-block;
+            margin-left: -11px;
+            margin-right: 12px;
+            vertical-align: top;
+        }
+
+        .step-name {
+            line-height: 18px;
+            margin: 0;
+            cursor: pointer;
+
+            &:hover:before {
+                background-color: hotpink;
+            }
+        }
+    }
+
+    .comparison {
+        width: 100%;
+        text-align: center;
+        padding: 0 12px 48px 12px;
+
+        .expected, .difference, .actual {
+        }
+
+        img {
+            border: 1px dashed black;
+            max-width: calc(100% - 48px);
+        }
     }
 }

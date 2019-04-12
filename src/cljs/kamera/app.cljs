@@ -6,61 +6,89 @@
 
 (def results-store (reagent/atom nil))
 
+(defn- normalisation-step []
+  (let [expanded? (reagent/atom false)]
+    (fn [{:keys [expected actual normalisation]}]
+      [:div.normalisation
+       [:h6.step-name
+        {:on-click #(swap! expanded? not)}
+        (name normalisation)]
+       [:div.comparison.mdl-grid
+        {:class (when-not @expanded? "contracted")}
+
+        [:div.expected.mdl-cell.mdl-cell--4-col
+         [:img {:src expected}]]
+
+        [:div.actual.mdl-cell.mdl-cell--4-col.mdl-cell--4-offset
+         [:img {:src actual}]]]])))
+
 (defn- test-result [result]
-  (let [child-style {:style {:flex-grow 0
-                             :flex-shrink 0
-                             :flex-basis "33%"
-                             :text-align "center"}}
-        chain (:normalisation-chain result)]
-    [:div.result
+  (let [chain (:normalisation-chain result)]
+    [:div.test-result.mdl-card.mdl-shadow--2dp
 
-     [:h4 [:a {:name (:expected result)} (:expected result)]
-      " - " (if (:passed? result) "passed" "failed")]
+     [:div.mdl-card__title
+      [:h4.mdl-card__title-text
+       [:i.material-icons
+        (if (:passed? result) "check_circle_outline" "remove_circle_outline")]
+       [:a {:name (:expected result)} (:expected result)]]]
 
-     [:div.detail
-      (get-in result [:target :metric]) ": "
-      (:metric result) " actual / "
-      (get-in result [:target :metric-threshold]) " expected"]
+     [:div.mdl-card__supporting-text
+      [:div.detail
+       (get-in result [:target :metric]) ": "
+       (:metric result) " actual / "
+       (get-in result [:target :metric-threshold]) " expected"]
 
-     [:div.normalisation-chain
-      (for [{:keys [expected actual normalisation] :as n} chain
-            :let [show-diff? (= n (last chain))]]
+      [:div.comparison-titles.mdl-grid
+       [:div.mdl-cell.mdl-cell--4-col
+        [:h6 "Expected"]]
 
-        [:div.normalisation {:key normalisation}
-         [:h6 (name normalisation)]
-         [:div.comparison {:style {:display "flex"
-                                   :flex-direction "row"
-                                   :flex-wrap "nowrap"
-                                   :justify-content "center"
-                                   :align-items "flex-start"}}
+       [:div.mdl-cell.mdl-cell--4-col
+        [:h6 "Difference"]]
 
-          [:div.expected child-style
-           [:h6 "Expected"]
+       [:div.mdl-cell.mdl-cell--4-col
+        [:h6 "Actual"]]]
+
+      [:div.normalisation-chain
+       (for [step chain]
+         ^{:key (:normalisation step)}
+         [normalisation-step step])]
+
+      (let [{:keys [expected actual]} (last chain)]
+        [:div.final-result
+         [:h6.step-name "Result"]
+         [:div.comparison.mdl-grid
+          [:div.expected.mdl-cell.mdl-cell--4-col
            [:img {:src expected}]]
 
-          [:div.difference child-style
-           (when show-diff?
-             [:<>
-              [:h6 "Difference"]
-              [:img {:src (:difference result)}]])]
+          [:div.difference.mdl-cell.mdl-cell--4-col
+           [:img {:src (:difference result)}]]
 
-          [:div.actual child-style
-           [:h6 "Actual"]
+          [:div.actual.mdl-cell.mdl-cell--4-col
            [:img {:src actual}]]]])]]))
+
+(defn- summary [results]
+  [:div.summary.mdl-card.mdl-shadow--2dp
+   [:div.mdl-card__title
+    [:h2.mdl-card__title-text
+     "Summary"]]
+   [:div.mdl-card__supporting-text
+    [:div "Ran " (count results) " tests"]
+    [:div "Passed: " (count (filter :passed? results))]
+    [:div "Failed: " (count (remove :passed? results))]
+    [:div
+     [:h4 "Tests"]
+     [:ul
+      (doall (for [{:keys [expected]} results]
+               [:li {:key expected}
+                [:a {:href (str "#" expected)}
+                 expected]]))]]]])
 
 (defn- hello-world []
   (let [{:keys [results]} @results-store]
     [:div
-     [:h1 "kamera"]
-     [:h3 "Summary"]
-     [:div "Ran " (count results) " tests"]
-     [:div "Passed: " (count (filter :passed? results))]
-     [:div "Failed: " (count (remove :passed? results))]
-     [:div [:ul
-            (doall (for [{:keys [expected]} results]
-                     [:li {:key expected}
-                      [:a {:href (str "#" expected)}
-                       expected]]))]]
+     [:h1.title.mdl-shadow--2dp "kamera"]
+
+     [summary results]
 
      (doall (for [result results]
               ^{:key (:expected result)}
