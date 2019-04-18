@@ -13,3 +13,5 @@ pom.xml.asc
 /example/test-resources/kamera/*-cropped.png
 /example/.lein-*
 /example/resources/public/cljs-out
+/resources/public/css
+/resources/public/kamera.js
