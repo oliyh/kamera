@@ -83,19 +83,22 @@
                 [:a {:href (str "#" expected)}
                  expected]]))]]]])
 
-(defn- hello-world []
+(defn- kamera-report []
   (let [{:keys [results]} @results-store]
     [:div
      [:h1.title.mdl-shadow--2dp "kamera"]
 
-     [summary results]
+     [:div.mdl-grid
+      [:div.mdl-cell.mdl-cell--12-col
+       [summary results]]
 
-     (doall (for [result results]
-              ^{:key (:expected result)}
-              [test-result result]))]))
+      (doall (for [result results]
+               ^{:key (:expected result)}
+               [:div.mdl-cell.mdl-cell--12-col
+                [test-result result]]))]]))
 
 (defn- mount-app []
-  (reagent/render [hello-world] app))
+  (reagent/render [kamera-report] app))
 
 (defn- load-results! []
   (->> js/results read-string (reset! results-store)))

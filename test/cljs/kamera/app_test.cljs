@@ -2,5 +2,5 @@
   (:require [kamera.app :as app]
             [devcards.core :refer-macros [defcard-rg]]))
 
-(defcard-rg hello-world-test
-  [app/hello-world])
+(defcard-rg kamera-report-test
+  [app/kamera-report])
