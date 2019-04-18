@@ -98,11 +98,7 @@
   (reagent/render [hello-world] app))
 
 (defn- load-results! []
-  (-> (js/fetch "results.edn")
-      (.then (fn [response]
-               (.text response)))
-      (.then (fn [text]
-               (reset! results-store (read-string text))))))
+  (->> js/results read-string (reset! results-store)))
 
 (defn- init []
   (load-results!)
