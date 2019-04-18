@@ -108,8 +108,9 @@
 
       (testing "the actual files are written to the target directory"
         (let [actual-files (.list (io/file target-dir))]
-          (is (= ["example.another_core_test.actual.png"
-                  "example.core_test.actual.png"
-                  "index.html"
-                  "results.edn"]
-                 (into [] (sort actual-files)))))))))
+          (is (= (every? #{"example.another_core_test.actual.png"
+                           "example.core_test.actual.png"
+                           "index.html"
+                           "results.edn"
+                           "results.js"}
+                         actual-files))))))))
