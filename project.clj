@@ -34,13 +34,13 @@
                    :plugins [[lein-sass "0.4.0"]]
                    :sass {:src "resources/sass"
                           :output-directory "resources/public/css"}}
-             :build {:prep-tasks [["with-profile" "-build" "run" "-m" "figwheel.main" "-O" "advanced" "-bo" "dist"] ;; fig:min
-                                  ["with-profile" "-build" "sass" "once"]]}}
+             :repl {:prep-tasks ^:replace []}
+             :build {:prep-tasks ^:replace []}}
+
+  :prep-tasks [["with-profile" "+build,+dev" "run" "-m" "figwheel.main" "-O" "advanced" "-bo" "dist"] ;; fig:min
+               ["sass" "once"]]
 
   :aliases {"fig"       ["trampoline" "run" "-m" "figwheel.main"]
             "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]
             "fig:min"   ["run" "-m" "figwheel.main" "-O" "advanced" "-bo" "dist"]
-            "fig:test"  ["run" "-m" "figwheel.main" "-co" "test.cljs.edn" "-m" kamera.test-runner]
-            "test"      ["with-profile" "+build" ["test"]]
-            "jar"       ["with-profile" "+build" ["jar"]]
-            "install"   ["with-profile" "+build" ["install"]]})
+            "fig:test"  ["run" "-m" "figwheel.main" "-co" "test.cljs.edn" "-m" kamera.test-runner]})
