@@ -26,6 +26,11 @@ jobs:
 
       - run: compare --version
 
+      - run:
+          name: Install sassc
+          command: |
+            sudo apt-get -y install sassc
+
       # Download and cache dependencies
       - restore_cache:
           keys:
