@@ -28,7 +28,9 @@
                    :source-paths ["src/cljs"]
                    :test-paths ["test/cljs"]
                    :resource-paths ["resources" "target" "example/resources"]
-                   :clean-targets ^{:protect false} ["target"]
+                   :clean-targets ^{:protect false} ["target"
+                                                     "resources/public/css"
+                                                     "resources/public/kamera.js"]
                    :plugins [[lein-sass "0.4.0"]]
                    :sass {:src "resources/sass"
                           :output-directory "resources/public/css"}}}
@@ -37,4 +39,6 @@
             "fig:build" ["trampoline" "run" "-m" "figwheel.main" "-b" "dev" "-r"]
             "fig:min"   ["run" "-m" "figwheel.main" "-O" "advanced" "-bo" "dist"]
             "fig:test"  ["run" "-m" "figwheel.main" "-co" "test.cljs.edn" "-m" kamera.test-runner]
-            "jar"       ["do" ["sass" "once"] ["fig:min"] ["jar"]]})
+            "build-ui"  ["do" ["sass" "once"] ["fig:min"]]
+            "test"      ["do" ["build-ui"] ["test"]]
+            "jar"       ["do" ["build-ui"] ["jar"]]})

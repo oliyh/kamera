@@ -7,8 +7,11 @@
 (defn- delete-dir [d]
   (let [d (io/file d)]
     (when (.exists d)
-      (doseq [f (.list (io/file d))]
-        (io/delete-file (io/file d f)))
+      (doseq [entry (.list (io/file d))
+              :let [f (io/file d entry)]]
+        (if (.isDirectory f)
+          (delete-dir f)
+          (io/delete-file f)))
       (io/delete-file (io/file d)))))
 
 (defn- reinstall-methods [multi-fn methods]
