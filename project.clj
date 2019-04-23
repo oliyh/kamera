@@ -24,12 +24,12 @@
                                   [com.bhauman/figwheel-main "0.1.9"]
                                   [reagent "0.8.1"]
                                   [devcards "0.2.6"]
-                                  [binaryage/devtools "0.8.3"]]
+                                  [binaryage/devtools "0.9.10"]]
                    :source-paths ["src/cljs"]
                    :test-paths ["test/cljs"]
                    :resource-paths ["resources" "target" "example/resources"]
                    :clean-targets ^{:protect false} ["target"
-                                                     "resources/public/css"
+                                                     "resources/public/css/kamera.css"
                                                      "resources/public/kamera.js"]
                    :plugins [[lein-sass "0.4.0"]]
                    :sass {:src "resources/sass"
