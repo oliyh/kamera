@@ -138,3 +138,4 @@
 ;; 5. display the actual vs expected metric graphically - a gauge?
 ;; 6. display w x h in pixels on each image
 ;; 7. tests can have names - generate better ones in devcards
+;; 8. errors should bubble into the report
