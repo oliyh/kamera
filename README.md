@@ -276,9 +276,12 @@ Here are some example use cases you may wish to consider in addition to the stan
 
 Start a normal clj&cljs repl.
 
-[![CircleCI](https://circleci.com/gh/oliyh/kamera.svg?style=svg)](https://circleci.com/gh/oliyh/kamera)
-
 You will need sassc for building the sass.
+
+cljs tests: http://localhost:9500/figwheel-extra-main/auto-testing
+devcards: http://localhost:9500/figwheel-extra-main/devcards
+
+[![CircleCI](https://circleci.com/gh/oliyh/kamera.svg?style=svg)](https://circleci.com/gh/oliyh/kamera)
 
 ## License
 

@@ -19,9 +19,9 @@
   :test-paths ["test/clj"]
   :profiles {:provided {:dependencies [[org.clojure/clojure "1.10.0"]
                                        [org.clojure/clojurescript "1.10.339"]
-                                       [org.clojure/tools.reader "1.3.2"]
-                                       [com.bhauman/figwheel-main "0.1.9"]]}
+                                       [org.clojure/tools.reader "1.3.2"]]}
              :dev {:dependencies [;; required for report app & example project
+                                  [com.bhauman/figwheel-main "0.1.9"]
                                   [reagent "0.8.1"]
                                   [devcards "0.2.6"]
                                   [binaryage/devtools "0.8.3"]]

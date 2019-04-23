@@ -1,4 +1,4 @@
-(ns kamera.cards
+(ns kamera.devcards
   (:require [devcards.core]
             [kamera.all-tests]))
 

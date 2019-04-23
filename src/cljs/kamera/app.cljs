@@ -1,6 +1,7 @@
 (ns ^:figwheel-hooks kamera.app
   (:require [reagent.core :as reagent]
-            [cljs.reader :refer [read-string]]))
+            [cljs.reader :refer [read-string]]
+            [goog.object :as o]))
 
 (def app (js/document.getElementById "app"))
 
@@ -101,7 +102,8 @@
   (reagent/render [kamera-report] app))
 
 (defn- load-results! []
-  (->> js/results read-string (reset! results-store)))
+  (when-let [r (o/get js/window "results")]
+    (->> r read-string (reset! results-store))))
 
 (defn- init []
   (load-results!)

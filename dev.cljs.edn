@@ -2,7 +2,11 @@
   :css-dirs ["resources/public/css"]
   :open-url false
   :auto-testing true
-  :extra-main-files {:cards {:main kamera.cards}}}
+  :extra-main-files {:devcards {:main kamera.devcards}}}
 {:main kamera.app
  :output-to "target/public/kamera.js"
- :devcards true}
+ :devcards true
+ :preloads [devtools.preload]
+ :external-config {:devtools/config {:features-to-install    [:formatters :hints]
+                                     :fn-symbol              "F"
+                                     :print-config-overrides true}}}
