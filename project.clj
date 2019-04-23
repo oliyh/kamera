@@ -27,7 +27,7 @@
                                   [binaryage/devtools "0.9.10"]]
                    :source-paths ["src/cljs"]
                    :test-paths ["test/cljs"]
-                   :resource-paths ["resources" "target" "example/resources"]
+                   :resource-paths ["resources" "target" "test-resources" "example/resources"]
                    :clean-targets ^{:protect false} ["target"
                                                      "resources/public/css/kamera.css"
                                                      "resources/public/kamera.js"]

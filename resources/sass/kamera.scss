@@ -1,6 +1,9 @@
 @import 'material.min';
 @import 'material-icons';
 
+$passed-colour: green;
+$failed-colour: red;
+
 body {
     background-color: lightgrey;
 }
@@ -10,7 +13,7 @@ body {
 
     .title {
         background-color: white;
-        border-radius: 48px;
+        border-radius: 8px;
         width: 100%;
         text-align: center;
         box-sizing: border-box;
@@ -30,11 +33,72 @@ body {
     width: 100%;
 }
 
+.passed {
+    color: $passed-colour;
+}
+
+.failed {
+    color: $failed-colour;
+}
+
 .summary {
     width: 100%;
+
+    .stats {
+        text-align: center;
+        .headline {
+            font-size: 3em;
+            line-height: 1.5em;
+            font-weight: bold;
+        }
+
+        i.material-icons {
+            display: inline-block;
+            vertical-align: bottom;
+            width: 1em;
+
+            margin-right: 4px;
+        }
+
+        > div {
+            border-right: 1px solid lightgrey;
+
+            &:last-child {
+                border-right: none;
+            }
+        }
+    }
+
+    .test-list {
+
+        li {
+            list-style-type: none;
+            &::before {
+                display: inline-block;
+                font-family: 'Material Icons';
+                width: 24px;
+                vertical-align: bottom;
+            }
+        }
+
+        .passed::before {
+            content: "check_circle_outline";
+        }
+
+        .failed::before {
+            content: "cancel";
+        }
+
+
+    }
 }
 
 .test-result {
+
+    .test-name {
+        color: inherit;
+        text-decoration: none;
+    }
 
     .detail {
         padding: 12px;
@@ -65,16 +129,21 @@ body {
         min-height: 24px;
 
         .step-name:before {
-            content: '';
+            font-family: 'Material Icons';
+            width: 24px;
+            vertical-align: bottom;
+            margin-left: -9px;
+            margin-right: 8px;
+            font-size: 18px;
             background-color: white;
-            height: 15px;
-            width: 15px;
-            border: 3px solid black;
-            border-radius: 15px;
-            display: inline-block;
-            margin-left: -11px;
-            margin-right: 12px;
-            vertical-align: top;
+        }
+
+        .step-name.expanded:before {
+            content: 'remove_circle_outline';
+        }
+
+        .step-name.contracted:before {
+            content: 'add_circle_outline';
         }
 
         .step-name {
@@ -82,8 +151,8 @@ body {
             margin: 0;
             cursor: pointer;
 
-            &:hover:before {
-                background-color: hotpink;
+            &:hover {
+                color: black;
             }
         }
     }

@@ -279,7 +279,7 @@ Start a normal clj&cljs repl.
 You will need sassc for building the sass.
 
 cljs tests: http://localhost:9500/figwheel-extra-main/auto-testing
-devcards: http://localhost:9500/figwheel-extra-main/devcards
+devcards: http://localhost:9500/cards.html
 
 [![CircleCI](https://circleci.com/gh/oliyh/kamera.svg?style=svg)](https://circleci.com/gh/oliyh/kamera)
 
