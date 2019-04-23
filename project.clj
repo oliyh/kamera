@@ -31,11 +31,12 @@
                    :clean-targets ^{:protect false} ["target"
                                                      "resources/public/css/kamera.css"
                                                      "resources/public/kamera.js"]
-                   :plugins [[lein-sass "0.4.0"]]
-                   :sass {:src "resources/sass"
-                          :output-directory "resources/public/css"}}
+                   :plugins [[lein-sass "0.4.0"]]}
              :repl {:prep-tasks ^:replace []}
              :build {:prep-tasks ^:replace []}}
+
+  :sass {:src "resources/sass"
+         :output-directory "resources/public/css"}
 
   :prep-tasks [["with-profile" "+build,+dev" "run" "-m" "figwheel.main" "-O" "advanced" "-bo" "dist"] ;; fig:min
                ["sass" "once"]]
