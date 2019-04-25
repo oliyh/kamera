@@ -1,13 +1,28 @@
 (ns ^:figwheel-hooks kamera.app
   (:require [reagent.core :as reagent]
+            [reagent.ratom :as ratom]
             [cljs.reader :refer [read-string]]
             [clojure.string :as string]
             [goog.object :as o]))
 
 (def app (js/document.getElementById "app"))
 
+;; state
 (def results-store (reagent/atom nil))
+(def sort-key (reagent/atom :expected))
+(def failures-only? (reagent/atom false))
 
+(def results
+  (ratom/reaction
+   (some->> @results-store
+            :results
+            not-empty
+            (sort-by @sort-key)
+            (filter (if @failures-only?
+                      (complement :passed?)
+                      (constantly true))))))
+
+;; renders
 (defn- image [url]
   [:a {:href url
        :target "_blank"}
@@ -44,8 +59,8 @@
      [:div.mdl-card__supporting-text
       [:div.detail
        (get-in result [:target :metric]) ": "
-       (:metric result) " actual / "
-       (get-in result [:target :metric-threshold]) " expected"]
+       (:metric result) " / "
+       (get-in result [:target :metric-threshold]) " threshold"]
 
       [:div.comparison-titles.mdl-grid
        [:div.mdl-cell.mdl-cell--4-col
@@ -83,6 +98,33 @@
              [:a {:href (str "#" expected)}
               expected]]))])
 
+(defn- test-summary [results]
+  [:div
+   [:h4 "Tests"]
+   [:div.controls
+    "Sort: "
+    [:select {:value (name @sort-key)
+              :on-change (fn [x]
+                           (reset! sort-key (keyword (.-value (.-target x)))))}
+     (for [[label value] [["Name" :expected]
+                          ["Difference" :metric]]]
+       [:option {:key value :value value}
+        label])]
+
+    " Failures only: "
+    [:label.mdl-switch.is-upgraded
+     {:class (when @failures-only? "is-checked")
+      :for "failures-only?"}
+     [:input.mdl-switch__input {:id "failures-only?"
+                                :type "checkbox"
+                                :defaultChecked @failures-only?
+                                :on-change (fn [x]
+                                             (reset! failures-only? (.-checked (.-target x))))}]
+     [:div.mdl-switch__track]
+     [:div.mdl-switch__thumb
+      [:span.mdl-switch__focus-helper]]]]
+   [test-list results]])
+
 (defn summary [results]
   [:div.summary.mdl-card.mdl-shadow--2dp
    [:div.mdl-card__title
@@ -100,9 +142,7 @@
       [:div.headline (count (remove :passed? results))]
       [:i.material-icons "cancel"]
       "failed"]]
-    [:div
-     [:h4 "Tests"]
-     [test-list results]]]])
+    [test-summary results]]])
 
 (defn- floating-menu []
   (let [expanded? (reagent/atom false)]
@@ -124,7 +164,7 @@
           [test-list results])]])))
 
 (defn- kamera-report []
-  (let [{:keys [results]} @results-store]
+  (let [results @results]
     [:div
      [floating-menu results]
      [:h1.title.mdl-shadow--2dp
@@ -159,8 +199,6 @@
 (.addEventListener js/document "DOMContentLoaded" init)
 
 ;; todo
-;; 2. Sorting tests by name / difference metric
-;; 3. Filtering - all or failed only - should filter list at the top as well as cards below
 ;; 4. icon / branding in the header
 ;; 5. display the actual vs expected metric graphically - a gauge?
 ;; 6. display w x h in pixels on each image

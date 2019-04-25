@@ -219,3 +219,13 @@ body {
         }
     }
 }
+
+select {
+    border: 1px solid black;
+    border-width: 0 0 1px 0;
+    background: transparent;
+}
+
+label.mdl-switch {
+    width: auto;
+}
