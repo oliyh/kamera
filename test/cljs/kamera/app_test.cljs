@@ -50,7 +50,7 @@
    [:h2 "Long chain"]
    [app/test-result {:expected "The ugly"
                      :passed? false
-                     :metric 0.0973
+                     :metric 0.2973
                      :difference "example.core_test.expected.difference.png"
                      :normalisation-chain [{:normalisation :original
                                             :expected "example.core_test.expected.png"

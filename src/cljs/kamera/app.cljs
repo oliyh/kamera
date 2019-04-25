@@ -1,5 +1,6 @@
 (ns ^:figwheel-hooks kamera.app
   (:require [kamera.images :refer [image]]
+            [kamera.graphs :refer [log-gauge]]
             [reagent.core :as reagent]
             [reagent.ratom :as ratom]
             [cljs.reader :refer [read-string]]
@@ -55,6 +56,7 @@
 
      [:div.mdl-card__supporting-text
       [:div.detail
+       [log-gauge (:metric result)]
        (get-in result [:target :metric]) ": "
        (:metric result) " / "
        (get-in result [:target :metric-threshold]) " threshold"]
