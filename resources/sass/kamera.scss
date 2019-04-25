@@ -41,6 +41,77 @@ body {
     color: $failed-colour;
 }
 
+.floating-menu {
+    position: fixed;
+    overflow: hidden;
+    background-color: rgba(0,0,0,0.7);
+    color: white;
+    left: 0;
+    top: 120px;
+    z-index: 100;
+    border-radius: 0 16px 16px 0;
+
+    &.expanded {
+        background-color: rgb(65, 65, 65);
+    }
+
+    .button-container {
+        width: 100%;
+    }
+
+    .top-button, .list-button {
+        cursor: pointer;
+        font-size: 0.5em;
+
+        &:hover {
+            background-color: rgba(255,255,255,0.3);
+        }
+
+        i.material-icons {
+            font-size: 24px;
+            line-height: 24px;
+            margin-bottom: -8px;
+            display: block;
+            width: 36px;
+            text-align: center;
+        }
+
+        .description {
+            width: 36px;
+            text-align: center;
+            text-transform: uppercase;
+            display: block;
+            font-size: 8px;
+        }
+    }
+
+    .test-list {
+        padding: 0 8px 0 8px;
+    }
+
+}
+
+.test-list {
+    li {
+        list-style-type: none;
+        &::before {
+            display: inline-block;
+            font-family: 'Material Icons';
+            width: 24px;
+            vertical-align: bottom;
+        }
+    }
+
+    .passed::before {
+        content: "check_circle_outline";
+    }
+
+    .failed::before {
+        content: "cancel";
+    }
+}
+
+
 .summary {
     width: 100%;
 
@@ -67,29 +138,6 @@ body {
                 border-right: none;
             }
         }
-    }
-
-    .test-list {
-
-        li {
-            list-style-type: none;
-            &::before {
-                display: inline-block;
-                font-family: 'Material Icons';
-                width: 24px;
-                vertical-align: bottom;
-            }
-        }
-
-        .passed::before {
-            content: "check_circle_outline";
-        }
-
-        .failed::before {
-            content: "cancel";
-        }
-
-
     }
 }
 

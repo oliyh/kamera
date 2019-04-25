@@ -8,6 +8,11 @@
 
 (def results-store (reagent/atom nil))
 
+(defn- image [url]
+  [:a {:href url
+       :target "_blank"}
+   [:img {:src url}]])
+
 (defn- normalisation-step []
   (let [expanded? (reagent/atom false)]
     (fn [{:keys [expected actual normalisation]}]
@@ -20,10 +25,10 @@
         {:class (when-not @expanded? "contracted")}
 
         [:div.expected.mdl-cell.mdl-cell--4-col
-         [:img {:src expected}]]
+         [image expected]]
 
         [:div.actual.mdl-cell.mdl-cell--4-col.mdl-cell--4-offset
-         [:img {:src actual}]]]])))
+         [image actual]]]])))
 
 (defn test-result [result]
   (let [chain (:normalisation-chain result)]
@@ -62,13 +67,21 @@
          [:h6.step-name.expanded "Result"]
          [:div.comparison.mdl-grid
           [:div.expected.mdl-cell.mdl-cell--4-col
-           [:img {:src expected}]]
+           [image expected]]
 
           [:div.difference.mdl-cell.mdl-cell--4-col
-           [:img {:src (:difference result)}]]
+           [image (:difference result)]]
 
           [:div.actual.mdl-cell.mdl-cell--4-col
-           [:img {:src actual}]]]])]]))
+           [image actual]]]])]]))
+
+(defn- test-list [results]
+  [:ul.test-list
+   (doall (for [{:keys [expected passed?]} results]
+            [:li {:key expected
+                  :class (if passed? "passed" "failed")}
+             [:a {:href (str "#" expected)}
+              expected]]))])
 
 (defn summary [results]
   [:div.summary.mdl-card.mdl-shadow--2dp
@@ -89,16 +102,31 @@
       "failed"]]
     [:div
      [:h4 "Tests"]
-     [:ul.test-list
-      (doall (for [{:keys [expected passed?]} results]
-               [:li {:key expected
-                     :class (if passed? "passed" "failed")}
-                [:a {:href (str "#" expected)}
-                 expected]]))]]]])
+     [test-list results]]]])
+
+(defn- floating-menu []
+  (let [expanded? (reagent/atom false)]
+    (fn [results]
+      [:div.floating-menu
+       {:on-mouse-leave (fn [] (reset! expanded? false))
+        :class (when @expanded? "expanded")}
+       [:div.button-container
+        {:on-click (fn [] (.scrollTo js/window 0 0))}
+        [:div.top-button
+         [:i.material-icons "eject"]
+         [:span.description "top"]]]
+       [:div.button-container
+        {:on-click (fn [] (swap! expanded? not))}
+        [:div.list-button
+         [:i.material-icons "list"]
+         [:span.description "tests"]]
+        (when @expanded?
+          [test-list results])]])))
 
 (defn- kamera-report []
   (let [{:keys [results]} @results-store]
     [:div
+     [floating-menu results]
      [:h1.title.mdl-shadow--2dp
       {:class (if (every? :passed? results) "passed" "failed")}
       "kamera"]
@@ -131,7 +159,6 @@
 (.addEventListener js/document "DOMContentLoaded" init)
 
 ;; todo
-;; 1. "Back to top" thingy at the bottom, so you can quickly get back to the top
 ;; 2. Sorting tests by name / difference metric
 ;; 3. Filtering - all or failed only - should filter list at the top as well as cards below
 ;; 4. icon / branding in the header
@@ -139,3 +166,4 @@
 ;; 6. display w x h in pixels on each image
 ;; 7. tests can have names - generate better ones in devcards
 ;; 8. errors should bubble into the report
+;; 9. magnifier on images
