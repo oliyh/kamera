@@ -1,5 +1,6 @@
 (ns ^:figwheel-hooks kamera.app
-  (:require [reagent.core :as reagent]
+  (:require [kamera.images :refer [image]]
+            [reagent.core :as reagent]
             [reagent.ratom :as ratom]
             [cljs.reader :refer [read-string]]
             [clojure.string :as string]
@@ -23,10 +24,6 @@
                       (constantly true))))))
 
 ;; renders
-(defn- image [url]
-  [:a {:href url
-       :target "_blank"}
-   [:img {:src url}]])
 
 (defn- normalisation-step []
   (let [expanded? (reagent/atom false)]
@@ -204,4 +201,3 @@
 ;; 6. display w x h in pixels on each image
 ;; 7. tests can have names - generate better ones in devcards
 ;; 8. errors should bubble into the report
-;; 9. magnifier on images

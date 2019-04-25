@@ -4,6 +4,10 @@
 $passed-colour: green;
 $failed-colour: red;
 
+* {
+    box-sizing: border-box;
+}
+
 body {
     background-color: lightgrey;
 }
@@ -228,4 +232,23 @@ select {
 
 label.mdl-switch {
     width: auto;
+}
+
+.img-magnifier-container {
+    position: relative;
+}
+
+.img-magnifier-glass {
+  position: absolute;
+  border: 3px solid #000;
+  border-radius: 50%;
+  cursor: none;
+  /*Set the size of the magnifier glass:*/
+  width: 100px;
+  height: 100px;
+  display: none;
+
+  &.visible {
+      display: block;
+  }
 }
