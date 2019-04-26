@@ -16,9 +16,17 @@
    [:h4 "Easily green"]
    [log-gauge 0.1 0.001]
 
+   [:h4 "Close to amber"]
+   [log-gauge 0.1 0.05]
+
+   [:h4 "Just amber"]
+   [log-gauge 0.1 0.051]
+
    [:h4 "Close to red"]
    [log-gauge 0.1 0.09165466]
 
+   [:h4 "Just red"]
+   [log-gauge 0.1 0.1001]
+
    [:h4 "Massively red"]
-   [log-gauge 0.1 0.4]
-])
+   [log-gauge 0.1 0.4]])
