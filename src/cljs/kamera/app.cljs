@@ -56,7 +56,9 @@
 
      [:div.mdl-card__supporting-text
       [:div.detail
-       [log-gauge (:metric result)]
+       [log-gauge
+        (get-in result [:target :metric-threshold])
+        (:metric result)]
        (get-in result [:target :metric]) ": "
        (:metric result) " / "
        (get-in result [:target :metric-threshold]) " threshold"]
@@ -199,7 +201,10 @@
 
 ;; todo
 ;; 4. icon / branding in the header
-;; 5. display the actual vs expected metric graphically - a gauge?
+;; 5. format the number in the gauge to be max 4dp
+;; 5.5 show the threshold on the gauge, small text under the main stat?
+;;     or have a detail panel on the left and the gauge on the right
+;; 5.6 have a needle on the gauge? or something like that
 ;; 6. display w x h in pixels on each image
 ;; 7. tests can have names - generate better ones in devcards
 ;; 8. errors should bubble into the report

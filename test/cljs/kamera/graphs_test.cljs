@@ -7,17 +7,18 @@
    [:h4 "Nil"]
    [log-gauge nil]
 
-   [:h4 "Zero"]
-   [log-gauge 0]
+   (for [v [0 0.0001 0.001 0.01 0.1 1]
+         :let [threshold (* v 1.3)]]
+     [:div {:key v}
+      [:h4 "Value: " v]
+      [log-gauge threshold v]])
 
-   [:h4 "0.25"]
-   [log-gauge 0.25]
+   [:h4 "Easily green"]
+   [log-gauge 0.1 0.001]
 
-   [:h4 "0.5"]
-   [log-gauge 0.5]
+   [:h4 "Close to red"]
+   [log-gauge 0.1 0.09165466]
 
-   [:h4 "0.75"]
-   [log-gauge 0.75]
-
-   [:h4 "1"]
-   [log-gauge 1]])
+   [:h4 "Massively red"]
+   [log-gauge 0.1 0.4]
+])
