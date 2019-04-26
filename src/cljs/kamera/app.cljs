@@ -27,7 +27,9 @@
 ;; renders
 
 (defn- normalisation-step []
-  (let [expanded? (reagent/atom false)]
+  (let [expanded? (reagent/atom false)
+        cursor-pos (reagent/atom nil)
+        show-glass? (reagent/atom false)]
     (fn [{:keys [expected actual normalisation]}]
       [:div.normalisation
        [:h6.step-name
@@ -38,10 +40,10 @@
         {:class (when-not @expanded? "contracted")}
 
         [:div.expected.mdl-cell.mdl-cell--4-col
-         [image expected]]
+         [image expected cursor-pos show-glass?]]
 
         [:div.actual.mdl-cell.mdl-cell--4-col.mdl-cell--4-offset
-         [image actual]]]])))
+         [image actual cursor-pos show-glass?]]]])))
 
 (defn test-result [result]
   (let [chain (:normalisation-chain result)]
@@ -81,18 +83,20 @@
          ^{:key (:normalisation step)}
          [normalisation-step step])]
 
-      (let [{:keys [expected actual]} (last chain)]
+      (let [{:keys [expected actual]} (last chain)
+            show-glass? (reagent/atom false)
+            cursor-pos (reagent/atom nil)]
         [:div.final-result
          [:h6.step-name.expanded "Result"]
          [:div.comparison.mdl-grid
           [:div.expected.mdl-cell.mdl-cell--4-col
-           [image expected]]
+           [image expected cursor-pos show-glass?]]
 
           [:div.difference.mdl-cell.mdl-cell--4-col
-           [image (:difference result)]]
+           [image (:difference result) cursor-pos show-glass?]]
 
           [:div.actual.mdl-cell.mdl-cell--4-col
-           [image actual]]]])]]))
+           [image actual cursor-pos show-glass?]]]])]]))
 
 (defn- test-list [results]
   [:ul.test-list

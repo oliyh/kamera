@@ -1,9 +1,10 @@
 (ns kamera.images
-  (:require [reagent.core :as reagent]))
+  (:require [reagent.core :as reagent]
+            [reagent.ratom :as ratom]))
 
 ;; from https://www.w3schools.com/howto/howto_js_image_magnifier_glass.asp
 
-(defn- cursor-pos [image event]
+(defn- ->cursor-pos [image event]
   (let [image-bounds (.getBoundingClientRect image)]
     {:x (- (.-pageX event)
            (.-left image-bounds)
@@ -12,41 +13,43 @@
            (.-top image-bounds)
            (.-pageYOffset js/window))}))
 
-(defn- ->magnifier-style [image glass event]
-  (.preventDefault event)
-  (let [{:keys [x y]} (cursor-pos image event)
-        image-width (.-width image)
-        image-height (.-height image)
-        width-offset 50 ;;(/ (.-offsetWidth glass) 2)
-        height-offset 50 ;;(/ (.-offsetHeight glass) 2)
-        zoom 3
-        border-width 3
-        left (max (/ width-offset zoom)
-                  (min x (- image-width (/ width-offset zoom))))
-        top (max (/ height-offset zoom)
-                 (min y (- image-height (/ height-offset zoom))))
-        background-pos (str "-" (- (* left zoom) (- width-offset border-width)) "px "
-                            "-" (- (* top zoom) (- height-offset border-width)) "px")]
+(defn- ->magnifier-style [image glass cursor-pos]
+  (when (and image glass cursor-pos)
+    (let [{:keys [x y]} cursor-pos
+          image-width (.-width image)
+          image-height (.-height image)
+          width-offset 50 ;;(/ (.-offsetWidth glass) 2)
+          height-offset 50 ;;(/ (.-offsetHeight glass) 2)
+          zoom 3
+          border-width 3
+          left (max (/ width-offset zoom)
+                    (min x (- image-width (/ width-offset zoom))))
+          top (max (/ height-offset zoom)
+                   (min y (- image-height (/ height-offset zoom))))
+          background-pos (str "-" (- (* left zoom) (- width-offset border-width)) "px "
+                              "-" (- (* top zoom) (- height-offset border-width)) "px")]
 
-    {:background-size (str (* image-width zoom) "px "
-                           (* image-height zoom) "px")
-     :left (- left (/ width-offset 2))
-     :top (- top height-offset)
-     :backgroundPosition background-pos}))
+      {:background-size (str (* image-width zoom) "px "
+                             (* image-height zoom) "px")
+       :left (- left (/ width-offset 2))
+       :top (- top height-offset)
+       :backgroundPosition background-pos})))
 
-(defn image [url]
-  (let [image-element (reagent/atom nil)
-        show-glass? (reagent/atom false)
+(defn image [url & [cursor-pos show-glass?]]
+  (let [cursor-pos (or cursor-pos (reagent/atom nil))
+        show-glass? (or show-glass? (reagent/atom false))
+        image-element (reagent/atom nil)
         glass-element (reagent/atom nil)
         magnifier-style
-        (reagent/atom {:background-image (str "url('" url "')")
-                       :background-repeat "no-repeat"})
+        (ratom/reaction
+         (merge {:background-image (str "url('" url "')")
+                 :background-repeat "no-repeat"}
+                (->magnifier-style @image-element
+                                   @glass-element
+                                   @cursor-pos)))
         move-handler (fn [event]
-                       (swap! magnifier-style
-                              merge
-                              (->magnifier-style @image-element
-                                                 @glass-element
-                                                 event)))]
+                       (.preventDefault event)
+                       (reset! cursor-pos (->cursor-pos @image-element event)))]
     (reagent/create-class
      {:reagent-render
       (fn [url]
