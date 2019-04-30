@@ -6,7 +6,7 @@ and [devcards](https://github.com/bhauman/devcards) integration.
 Give kamera some reference images and your devcards build and get automatic screenshots and comparisons to your references of all your devcards.
 If you don't use figwheel or devcards, kamera can accept [a list of urls](#core-api) for you to roll your own.
 
-![](doc/juxtaposed.png?raw=true)
+![](doc/report-card.png?raw=true)
 
 [![Clojars Project](https://img.shields.io/clojars/v/kamera.svg)](https://clojars.org/kamera)
 
@@ -32,6 +32,8 @@ The best way to test visual representation is to create [devcards](https://githu
 which you can use to display components in as many states as possible. If you ensure you separate rendering from
 business logic you can ensure that refactoring will not affect them and prevent them becoming brittle - I outlined this approach
 in a [blog post for JUXT](https://juxt.pro/blog/posts/cljs-apps.html).
+
+![](doc/magnifier.png?raw=true)
 
 ## Prerequesites
 
@@ -98,9 +100,14 @@ expected: (< metric metric-threshold)
 ```
 
 The target directory will contain an expected, actual and difference image for every devcard.
-The three files referenced above will look like this:
+It will also contain an html report which presents the juxtaposed images,
+the normalisation steps and the difference compared to the threshold.
 
-![](doc/juxtaposed.png?raw=true)
+![](doc/summary.png?raw=true)
+
+![](doc/report-card.png?raw=true)
+
+![](doc/magnifier.png?raw=true)
 
 ### Core API
 
