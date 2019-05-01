@@ -3,12 +3,12 @@
 Visual testing tools for Clojure with [figwheel-main](https://github.com/bhauman/figwheel-main)
 and [devcards](https://github.com/bhauman/devcards) integration.
 
+[![Clojars Project](https://img.shields.io/clojars/v/kamera.svg)](https://clojars.org/kamera)
+
 Give kamera some reference images and your devcards build and get automatic screenshots and comparisons to your references of all your devcards.
 If you don't use figwheel or devcards, kamera can accept [a list of urls](#core-api) for you to roll your own.
 
 ![](doc/report-card.png?raw=true)
-
-[![Clojars Project](https://img.shields.io/clojars/v/kamera.svg)](https://clojars.org/kamera)
 
 - [Why?](#why)
 - [Prerequesites](#prerequesites)
@@ -283,7 +283,7 @@ Here are some example use cases you may wish to consider in addition to the stan
 
 Start a normal clj&cljs repl.
 
-You will need sassc for building the sass.
+You will need sassc for building the sass via `lein sass auto`.
 
 cljs tests: http://localhost:9500/figwheel-extra-main/auto-testing
 devcards: http://localhost:9500/cards.html
