@@ -1,4 +1,4 @@
-(defproject kamera "0.1.1-SNAPSHOT"
+(defproject kamera "0.1.1"
   :description "UI testing via image comparison and devcards"
   :url "https://github.com/oliyh/kamera"
   :license {:name "Eclipse Public License"
