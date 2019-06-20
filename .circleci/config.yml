@@ -20,6 +20,11 @@ jobs:
       - checkout
 
       - run:
+          name: apt-get update
+          command: |
+            sudo apt-get update
+
+      - run:
           name: Install imagemagick
           command: |
             sudo apt-get -y install imagemagick
