@@ -211,7 +211,7 @@
 
   (take-screenshot session target opts))
 
-(defn test-target [session {:keys [url reference-directory reference-file screenshot-directory metric-threshold] :as target} opts]
+(defn test-target [session {:keys [url reference-directory reference-file screenshot-directory metric-threshold assert?] :as target} opts]
   (testing url
     (log/info "Testing" target)
     (let [source-expected (io/file reference-directory reference-file)
@@ -235,13 +235,14 @@
         (doseq [error errors]
           (log/error error)))
 
-      (is passed?
-          (format "%s has diverged from reference by %s, please compare \nExpected: %s \nActual: %s \nDifference: %s"
-                  reference-file
-                  metric
-                  (or (:expected-normalised result) (:expected result))
-                  (or (:actual-normalised result) (:actual result))
-                  (:difference result)))
+      (when assert?
+        (is passed?
+            (format "%s has diverged from reference by %s, please compare \nExpected: %s \nActual: %s \nDifference: %s"
+                    reference-file
+                    metric
+                    (or (:expected-normalised result) (:expected result))
+                    (or (:actual-normalised result) (:actual result))
+                    (:difference result))))
 
       result)))
 
@@ -254,8 +255,9 @@
                          :reference-directory  "test-resources/kamera"
                          :screenshot-directory "target/kamera"
                          :normalisations       [:trim :crop]
-                         :ready? nil ;; (fn [session] ... ) a predicate that should return true when ready to take the screenshot
-                                     ;; see element-exists?
+                         :ready?               nil ;; (fn [session] ... ) a predicate that should return true when ready to take the screenshot
+                                                   ;; see element-exists?
+                         :assert?              true ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
                          }
    :normalisation-fns   {:trim trim-images
                          :crop crop-images}
