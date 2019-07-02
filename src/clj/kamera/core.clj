@@ -103,6 +103,13 @@
               normalisations)
       chain)))
 
+(defn ->absolute-paths [normalisation-chain]
+  (map (fn [n]
+         (-> n
+             (update :expected #(.getAbsolutePath %))
+             (update :actual #(.getAbsolutePath %))))
+       normalisation-chain))
+
 (defn compare-images [^File expected
                       ^File actual
                       {:keys [metric screenshot-directory normalisations]}
@@ -111,6 +118,7 @@
     {:metric 1
      :expected (.getAbsolutePath expected)
      :actual (.getAbsolutePath actual)
+     :normalisation-chain (->absolute-paths (normalisation-chain expected actual))
      :errors (->> [(when-not (.exists expected) (format "Expected is missing: %s" (.getAbsolutePath expected)))
                    (when-not (.exists actual) (format "Actual is missing: %s" (.getAbsolutePath actual)))]
                    (remove nil?)
@@ -139,11 +147,7 @@
        (merge-with concat
                    {:actual (.getAbsolutePath actual)
                     :expected (.getAbsolutePath expected)
-                    :normalisation-chain (map (fn [n]
-                                                (-> n
-                                                    (update :expected #(.getAbsolutePath %))
-                                                    (update :actual #(.getAbsolutePath %))))
-                                              normalisation-chain)}
+                    :normalisation-chain (->absolute-paths normalisation-chain)}
 
                    (if (not= 2 exit-code)
                      {:difference (.getAbsolutePath difference)}

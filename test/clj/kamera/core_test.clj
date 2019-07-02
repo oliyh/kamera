@@ -156,9 +156,13 @@
                                  actual
                                  default-target
                                  default-opts)]
-      (is (= {:expected   (.getAbsolutePath expected)
+      (is (= {:metric 1
+              :expected   (.getAbsolutePath expected)
               :actual     (.getAbsolutePath actual)
-              :metric 1}
+              :normalisation-chain
+              [{:normalisation :original
+                :expected      (.getAbsolutePath expected)
+                :actual        (.getAbsolutePath actual)}]}
              (dissoc result :errors)))
 
       (is (= [(format "Actual is missing: %s" (.getAbsolutePath actual))]
