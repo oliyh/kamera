@@ -157,11 +157,11 @@
                                  default-target
                                  default-opts)]
       (is (= {:expected   (.getAbsolutePath expected)
-              :actual     (str "Missing - " (.getAbsolutePath actual))
+              :actual     (.getAbsolutePath actual)
               :metric 1}
              (dissoc result :errors)))
 
-      (is (= ["Actual is missing"]
+      (is (= [(format "Actual is missing: %s" (.getAbsolutePath actual))]
              (:errors result))))))
 
 (deftest screenshot-comparison-test

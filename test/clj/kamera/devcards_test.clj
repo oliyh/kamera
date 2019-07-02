@@ -87,7 +87,8 @@
   (testing "when there are no reference images"
     (let [opts (-> kd/default-opts
                    (update :default-target merge {:reference-directory "target"
-                                                  :screenshot-directory target-dir}))]
+                                                  :screenshot-directory target-dir
+                                                  :assert? false}))]
 
       (let [passes (atom [])
             failures (atom [])
@@ -104,16 +105,18 @@
           (finally
             (reinstall-methods test/report original-report-methods)))
 
-        (testing "all the tests fail"
-          (is (= 2 (count @failures)))
-          (is (re-find #"Expected: Missing" (:message (first @failures))))
+        (testing "there are no failures or passes"
+          (is (= 0 (count @failures)))
           (is (= 0 (count @passes)))))
 
       (testing "the actual files are written to the target directory"
         (let [actual-files (.list (io/file target-dir))]
-          (is (= (every? #{"example.another_core_test.actual.png"
-                           "example.core_test.actual.png"
-                           "index.html"
-                           "results.edn"
-                           "results.js"}
-                         actual-files))))))))
+          (is (every? #{"example.another_core_test.actual.png"
+                        "example.core_test.actual.png"
+                        "kamera.html"
+                        "results.edn"
+                        "results.js"
+                        "kamera.js"
+                        "css"
+                        "fonts"}
+                      actual-files)))))))
