@@ -1,1 +1,2 @@
-public/* linguist-vendored
+*.css linguist-vendored
+_material*.scss linguist-vendored
