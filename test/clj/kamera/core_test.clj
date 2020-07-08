@@ -122,12 +122,9 @@
                                default-opts))))))
 
   (testing "fails when imagemagick command fails"
-    (with-redefs [k/magick (fn [op & args]
-                             (if (= "compare" op)
-                               {:exit-code 2
-                                :stdout ""
-                                :stderr ""}
-                               (apply k/magick op args)))]
+    (with-redefs [k/magick (constantly {:exit-code 2
+                                        :stdout ""
+                                        :stderr ""})]
       (let [expected (copy-target "test-resources/a.png" ".expected")
             actual (copy-target "test-resources/c.png" ".actual")
             result (compare-images expected
