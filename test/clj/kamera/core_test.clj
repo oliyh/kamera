@@ -1,8 +1,7 @@
 (ns kamera.core-test
   (:require [clojure.test :refer [deftest testing is]]
             [clojure.java.io :as io]
-            [kamera.core :refer [compare-images dimensions default-opts append-suffix]]
-            [kamera.core :as k]
+            [kamera.core :refer [compare-images dimensions default-opts append-suffix] :as k]
             [ring.adapter.jetty :refer [run-jetty]])
   (:import [org.eclipse.jetty.server Server]))
 
@@ -122,29 +121,23 @@
                                default-target
                                default-opts))))))
 
-  (testing "fails when images are different sizes and normalisations were not sufficient"
-    (let [expected (copy-target "test-resources/a.png" ".expected")
-          actual (copy-target "test-resources/c.png" ".actual")
-          [expected-width expected-height] (dimensions expected default-opts)
-          [actual-width actual-height] (dimensions actual default-opts)]
-
-      (is (< actual-width expected-width))
-      (is (< actual-height expected-height))
-
-      (let [result (compare-images expected
+  (testing "fails when imagemagick command fails"
+    (with-redefs [k/magick (constantly {:exit-code 2
+                                        :stdout ""
+                                        :stderr ""})]
+      (let [expected (copy-target "test-resources/a.png" ".expected")
+            actual (copy-target "test-resources/c.png" ".actual")
+            result (compare-images expected
                                    actual
-                                   (assoc default-target :normalisations [:trim])
+                                   (assoc default-target :normalisations [])
                                    default-opts)]
+
         (is (= {:metric              1
-                :expected            (.getAbsolutePath (io/file "target/a.expected.trimmed.png"))
-                :actual              (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))
-                :normalisation-chain
-                [{:normalisation :original
-                  :expected      (.getAbsolutePath expected)
-                  :actual        (.getAbsolutePath actual)}
-                 {:normalisation :trim
-                  :expected      (.getAbsolutePath (io/file "target/a.expected.trimmed.png")),
-                  :actual        (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))}]}
+                :expected            (.getAbsolutePath (io/file "target/a.expected.png"))
+                :actual              (.getAbsolutePath (io/file "target/c.actual.png"))
+                :normalisation-chain [{:normalisation :original
+                                       :expected      (.getAbsolutePath expected)
+                                       :actual        (.getAbsolutePath actual)}]}
                (dissoc result :errors)))
 
         (is (:errors result)))))
@@ -213,7 +206,12 @@
   (run-jetty (fn [request]
                {:status 200
                 :headers {"Content-Type" "text/html"}
-                :body "<h1>Hello World</h1>"})
+                :body "<svg width=\"300\" height=\"300\">
+                <rect width=\"400\" height=\"100\" style=\"fill:rgb(0,0,255);stroke-width:10;stroke:rgb(0,0,0)\" />
+                <polygon points=\"100,10 40,198 190,78 10,78 160,198\"
+  style=\"fill:lime;stroke:purple;stroke-width:5;fill-rule:evenodd;\" />
+                <circle cx=\"50\" cy=\"50\" r=\"40\" stroke=\"green\" stroke-width=\"4\" fill=\"yellow\" />
+</svg>"})
              {:port 3000
               :join? false}))
 
@@ -222,7 +220,7 @@
     (try
       (k/run-test
        {:url "http://localhost:3000"
-        :reference-file "hello-world.png"}
+        :reference-file "shapes.png"}
        (-> k/default-opts
            (update :default-target merge {:reference-directory "test-resources"})))
       (finally
