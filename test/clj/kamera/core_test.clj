@@ -121,29 +121,26 @@
                                default-target
                                default-opts))))))
 
-  (testing "fails when images are different sizes and normalisations were not sufficient"
-    (let [expected (copy-target "test-resources/a.png" ".expected")
-          actual (copy-target "test-resources/c.png" ".actual")
-          [expected-width expected-height] (dimensions expected default-opts)
-          [actual-width actual-height] (dimensions actual default-opts)]
-
-      (is (< actual-width expected-width))
-      (is (< actual-height expected-height))
-
-      (let [result (compare-images expected
+  (testing "fails when imagemagick command fails"
+    (with-redefs [k/magick (fn [op & args]
+                             (if (= "compare" op)
+                               {:exit-code 2
+                                :stdout ""
+                                :stderr ""}
+                               (apply k/magick op args)))]
+      (let [expected (copy-target "test-resources/a.png" ".expected")
+            actual (copy-target "test-resources/c.png" ".actual")
+            result (compare-images expected
                                    actual
-                                   (assoc default-target :normalisations [:trim])
+                                   (assoc default-target :normalisations [])
                                    default-opts)]
+
         (is (= {:metric              1
-                :expected            (.getAbsolutePath (io/file "target/a.expected.trimmed.png"))
-                :actual              (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))
-                :normalisation-chain
-                [{:normalisation :original
-                  :expected      (.getAbsolutePath expected)
-                  :actual        (.getAbsolutePath actual)}
-                 {:normalisation :trim
-                  :expected      (.getAbsolutePath (io/file "target/a.expected.trimmed.png")),
-                  :actual        (.getAbsolutePath (io/file "target/c.actual.trimmed.png"))}]}
+                :expected            (.getAbsolutePath (io/file "target/a.expected.png"))
+                :actual              (.getAbsolutePath (io/file "target/c.actual.png"))
+                :normalisation-chain [{:normalisation :original
+                                       :expected      (.getAbsolutePath expected)
+                                       :actual        (.getAbsolutePath actual)}]}
                (dissoc result :errors)))
 
         (is (:errors result)))))
