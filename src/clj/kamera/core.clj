@@ -3,12 +3,14 @@
             [me.raynes.conch.low-level :as sh]
             [clojure.java.io :as io]
             [clojure.test :refer [testing is]]
-            [doo-chrome-devprotocol.core :as dcd]
+            [clj-chrome-devtools.core :as cdp]
+            [clj-chrome-devtools.automation :as cdp-automation]
+            [clj-chrome-devtools.automation.fixture :as cdp-fixture]
+            [clj-chrome-devtools.automation.launcher :as cdp-launcher]
+            [clj-chrome-devtools.commands.page :as page]
             [clojure.string :as string]
             [clojure.tools.logging :as log])
-  (:import [io.webfolder.cdp.session Session]
-           [java.util.function Predicate]
-           [java.io File]))
+  (:import [java.io File]))
 
 (defn magick [operation
               operation-args
@@ -179,7 +181,7 @@
   (when resize-to-contents?
     (resize-window-to-contents! session))
 
-  (let [data (.captureScreenshot session true) ;; hides scrollbar
+  (let [data (page/capture-screenshot session {:from-surface true}) ;; hides scrollbar
         file (append-suffix screenshot-directory (io/file reference-file) ".actual")]
     (if data
       (do (io/make-parents file)
@@ -190,21 +192,15 @@
       (log/warn "Got no data from the screenshot for" reference-file))))
 
 (defn element-exists? [selector]
-  (fn [^Session session]
-    (let [result (.matches session selector)]
-      result)))
+  (fn [session]
+    (cdp-automation/sel session selector)))
 
-(defn wait-for [^Session session pred-fn]
-  (.waitUntil session (reify Predicate
-                        (test [this session]
-                          (pred-fn session)))))
+(defn wait-for [session pred-fn]
+  (cdp-automation/wait :element false (pred-fn session)))
 
-(defn- screenshot-target [^Session session {:keys [url load-timeout ready?] :as target} opts]
-  (.navigate session "about:blank") ;; solves a weird bug navigating directly between fragment urls, i think
-  (.waitDocumentReady session (int 1000))
-
-  (.navigate session url)
-  (.waitDocumentReady session (int load-timeout))
+(defn- screenshot-target [session {:keys [url load-timeout ready?] :as target} opts]
+  (cdp-automation/to session {:url "about:blank"}) ;; solves a weird bug navigating directly between fragment urls, i think
+  (cdp-automation/to session {:url url}) ;; todo should use load-timeout here
 
   (when ready?
     (wait-for session ready?))
@@ -265,16 +261,20 @@
                          :crop crop-images}
    :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
                          :timeout 2000} ;; kill imagemagick calls that exceed this time, in ms
-   :chrome-options      dcd/default-options ;; suggest you fix the width/height to make it device independant
+   :chrome-options      (cdp-launcher/default-options) ;; suggest you fix the width/height to make it device independant
    :report              {:enabled? true ;; write a report after testing
                          }
    })
 
+(defn- with-chrome-session [opts f]
+  ((cdp-fixture/create-chrome-fixture opts)
+   #(f @cdp-automation/current-automation)))
+
 (defn run-test
   ([target opts]
-   (dcd/with-chrome-session
+   (with-chrome-session
      (:chrome-options opts)
-     (fn [session _]
+     (fn [session]
        (run-test session target opts))))
   ([session target opts]
    (let [default-target (:default-target opts)]
@@ -282,9 +282,9 @@
 
 (defn run-tests
   ([targets opts]
-   (dcd/with-chrome-session
+   (with-chrome-session
      (:chrome-options opts)
-     (fn [session _]
+     (fn [session]
        (run-tests session targets opts))))
   ([session targets opts]
    (let [results (mapv (fn [target] (run-test session target opts))

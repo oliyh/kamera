@@ -4,7 +4,7 @@
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[me.raynes/conch "0.8.0"]
-                 [doo-chrome-devprotocol "0.1.0"]
+                 [clj-chrome-devtools "20200423"]
                  [hickory "0.7.1"]]
   :monkeypatch-clojure-test false
   :source-paths ["src/clj"]
