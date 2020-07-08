@@ -206,7 +206,12 @@
   (run-jetty (fn [request]
                {:status 200
                 :headers {"Content-Type" "text/html"}
-                :body "<h1>Hello World</h1>"})
+                :body "<svg width=\"300\" height=\"300\">
+                <rect width=\"400\" height=\"100\" style=\"fill:rgb(0,0,255);stroke-width:10;stroke:rgb(0,0,0)\" />
+                <polygon points=\"100,10 40,198 190,78 10,78 160,198\"
+  style=\"fill:lime;stroke:purple;stroke-width:5;fill-rule:evenodd;\" />
+                <circle cx=\"50\" cy=\"50\" r=\"40\" stroke=\"green\" stroke-width=\"4\" fill=\"yellow\" />
+</svg>"})
              {:port 3000
               :join? false}))
 
@@ -215,7 +220,7 @@
     (try
       (k/run-test
        {:url "http://localhost:3000"
-        :reference-file "hello-world.png"}
+        :reference-file "shapes.png"}
        (-> k/default-opts
            (update :default-target merge {:reference-directory "test-resources"})))
       (finally
