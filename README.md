@@ -146,7 +146,8 @@ Each target must provide a `:url` and `:reference-file` and can override any set
     :ready? (fn [session] ... )                  ;; predicate that should return true when screenshot can be taken
                                                  ;; see element-exists? as an example
     :normalisations [:trim :crop]                ;; normalisations to apply to images before comparison, in order of application
-    :assert? true}                               ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
+    :assert? true                                ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
+    :resize-to-contents? false}                  ;; resize browser window to fit contents before screenshot - true is legacy behaviour
 
  :normalisation-fns                              ;; normalisation functions, add your own if desired
    {:trim trim-images

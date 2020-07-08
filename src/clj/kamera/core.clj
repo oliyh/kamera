@@ -3,7 +3,6 @@
             [me.raynes.conch.low-level :as sh]
             [clojure.java.io :as io]
             [clojure.test :refer [testing is]]
-            [figwheel.main.api :as fig-api]
             [doo-chrome-devprotocol.core :as dcd]
             [clojure.string :as string]
             [clojure.tools.logging :as log])
@@ -176,8 +175,9 @@
     (.setDeviceMetricsOverride emulation width height device-scale-factor mobile?)
     (.setPageScaleFactor emulation 1.0)))
 
-(defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory] :as target} opts]
-  (resize-window-to-contents! session)
+(defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory]} {:keys [resize-to-contents?]}]
+  (when resize-to-contents?
+    (resize-window-to-contents! session))
 
   (let [data (.captureScreenshot session true) ;; hides scrollbar
         file (append-suffix screenshot-directory (io/file reference-file) ".actual")]
@@ -260,7 +260,7 @@
                          :ready?               nil ;; (fn [session] ... ) a predicate that should return true when ready to take the screenshot
                                                    ;; see element-exists?
                          :assert?              true ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
-                         }
+                         :resize-to-contents?  false}
    :normalisation-fns   {:trim trim-images
                          :crop crop-images}
    :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
