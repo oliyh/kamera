@@ -255,7 +255,7 @@
                          :ready?               nil ;; (fn [session] ... ) a predicate that should return true when ready to take the screenshot
                                                    ;; see element-exists?
                          :assert?              true ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
-                         :resize-to-contents?  true}
+                         :resize-to-contents?  false}
    :normalisation-fns   {:trim trim-images
                          :crop crop-images}
    :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
