@@ -263,7 +263,8 @@
    :chrome-options      (merge (cdp-launcher/default-options)
                                {:idle-timeout 0
                                 :max-msg-size-mb (* 5 1024 1024)
-                                :extra-chrome-args ["--window-size=1600,900"]})
+                                :extra-chrome-args ["--window-size=1600,900"
+                                                    "--hide-scrollbars"]})
    ;; suggest you fix the width/height to make it device independant
    :report              {:enabled? true ;; write a report after testing
                          }
