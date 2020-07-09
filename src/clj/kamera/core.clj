@@ -197,9 +197,9 @@
 (defn wait-for [session pred-fn]
   (cdp-automation/wait :element false (pred-fn session)))
 
-(defn- screenshot-target [session {:keys [url load-timeout ready?] :as target} opts]
+(defn- screenshot-target [session {:keys [url ready?] :as target} opts]
   (cdp-automation/to session "about:blank") ;; solves a weird bug navigating directly between fragment urls, i think
-  (cdp-automation/to session url) ;; todo should use load-timeout here
+  (cdp-automation/to session url)
 
   (when ready?
     (wait-for session ready?))
@@ -248,7 +248,6 @@
                          ;; :reference-file must be supplied on each target
                          :metric               "mae" ;; see https://imagemagick.org/script/command-line-options.php#metric
                          :metric-threshold     0.01
-                         :load-timeout         60000
                          :reference-directory  "test-resources/kamera"
                          :screenshot-directory "target/kamera"
                          :normalisations       [:trim :crop]
@@ -265,7 +264,7 @@
                          }
    })
 
-(defn- with-chrome-session [opts f]
+(defn with-chrome-session [opts f]
   ((cdp-fixture/create-chrome-fixture opts)
    #(let [{:keys [connection] :as automation} @cdp-automation/current-automation]
       (cdp-core/set-current-connection! connection)

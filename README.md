@@ -140,7 +140,6 @@ Each target must provide a `:url` and `:reference-file` and can override any set
                                                  ;; see https://imagemagick.org/script/command-line-options.php#metric
 
     :metric-threshold 0.01                       ;; difference metric above which comparison fails
-    :load-timeout 60000                          ;; max time in ms to wait for target url to load
     :reference-directory "test-resources/kamera" ;; directory where reference images are store
     :screenshot-directory "target/kamera"        ;; directory where screenshots and diffs should be saved
     :ready? (fn [session] ... )                  ;; predicate that should return true when screenshot can be taken
