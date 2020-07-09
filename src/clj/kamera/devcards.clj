@@ -5,11 +5,9 @@
             [hickory.core :as h]
             [hickory.select :as s]
             [clojure.string :as string]
-            [doo-chrome-devprotocol.core :as dcd]
-            [clojure.test :refer [deftest]]
             [clojure.tools.logging :as log]
-            [clojure.edn :as edn])
-  (:import [io.webfolder.cdp.session Session]))
+            [clj-chrome-devtools.automation :as cdp-automation]
+            [clj-chrome-devtools.commands.dom :as dom]))
 
 ;; nice figwheel changes:
 ;; 1. make fig/start-build-arg->build-options public
@@ -57,11 +55,8 @@
        (map string/trim)
        (map #(str "#!/" %))))
 
-(defn find-test-urls [^Session session]
-  (let [dom (.getDOM (.getCommand session))
-        root-node (.getDocument dom)
-        html (.getOuterHTML dom (.getNodeId root-node) nil nil)]
-    (extract-links html)))
+(defn find-test-urls [{:keys [connection] :as session}]
+  (extract-links (:outer-html (dom/get-outer-html connection (cdp-automation/root session)))))
 
 (def devcards-list-ready?
   (k/element-exists? ".com-rigsomelight-devcards-list-group"))
@@ -82,25 +77,22 @@
 
 (defn test-devcards
   ([build-or-id] (test-devcards build-or-id default-opts))
-
   ([build-or-id opts]
-   (dcd/with-chrome-session (:chrome-options opts)
-     (fn [session _]
+   (k/with-chrome-session (:chrome-options opts)
+     (fn [session]
        (test-devcards session build-or-id opts))))
 
-  ([^Session session build-or-id opts]
+  ([session build-or-id opts]
    (let [devcards-url (start-devcards build-or-id opts)]
      (try
        (test-devcards devcards-url session build-or-id opts)
        (finally
          (stop-devcards build-or-id)))))
 
-  ([devcards-url ^Session session _ {:keys [devcards-options] :as opts}]
-   (let [{:keys [init-hook on-targets]} devcards-options
-         load-timeout (get-in opts [:default-target :load-timeout])]
+  ([devcards-url session _ {:keys [devcards-options] :as opts}]
+   (let [{:keys [init-hook on-targets]} devcards-options]
      (log/info "Navigating to" devcards-url)
-     (.navigate session devcards-url)
-     (.waitDocumentReady session load-timeout)
+     (cdp-automation/to session devcards-url)
      (k/wait-for session devcards-list-ready?)
      (Thread/sleep 500)
      (when init-hook

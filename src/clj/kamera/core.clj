@@ -3,12 +3,17 @@
             [me.raynes.conch.low-level :as sh]
             [clojure.java.io :as io]
             [clojure.test :refer [testing is]]
-            [doo-chrome-devprotocol.core :as dcd]
+            [clj-chrome-devtools.core :as cdp-core]
+            [clj-chrome-devtools.automation :as cdp-automation]
+            [clj-chrome-devtools.automation.fixture :as cdp-fixture]
+            [clj-chrome-devtools.automation.launcher :as cdp-launcher]
+            [clj-chrome-devtools.commands.page :as page]
+            [clj-chrome-devtools.commands.dom :as dom]
+            [clj-chrome-devtools.commands.emulation :as emulation]
             [clojure.string :as string]
             [clojure.tools.logging :as log])
-  (:import [io.webfolder.cdp.session Session]
-           [java.util.function Predicate]
-           [java.io File]))
+  (:import [java.io File]
+           [java.util Base64]))
 
 (defn magick [operation
               operation-args
@@ -158,53 +163,43 @@
                      {:errors [(format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
                                        stdout stderr)]}))))))
 
-(defn- body-dimensions [^Session session]
-  (let [dom (.getDOM (.getCommand session))
-        root-node (.getDocument dom)
-        body-node-id (.querySelector dom (.getNodeId root-node) "body")
-        box-model (.getBoxModel dom body-node-id nil nil)]
-    [(.getWidth box-model) (.getHeight box-model)]))
+(defn- body-dimensions [{:keys [connection] :as session}]
+  (when-let [body (cdp-automation/sel1 session "body")]
+    (:model (dom/get-box-model connection body))))
 
-(defn- resize-window-to-contents! [^Session session]
-  (let [[width height] (body-dimensions session)
-        emulation (.getEmulation (.getCommand session))
-        device-scale-factor 1.0
-        mobile? false]
+(defn- resize-window-to-contents! [{:keys [connection] :as session}]
+  (let [{:keys [width height]} (body-dimensions session)]
+    (emulation/set-visible-size connection {:width width :height height})
+    (emulation/set-device-metrics-override connection {:width width
+                                                       :height height
+                                                       :device-scale-factor 1.0
+                                                       :mobile false})
+    (emulation/set-page-scale-factor connection {:page-scale-factor 1.0})))
 
-    (.setVisibleSize emulation width height)
-    (.setDeviceMetricsOverride emulation width height device-scale-factor mobile?)
-    (.setPageScaleFactor emulation 1.0)))
-
-(defn- take-screenshot [^Session session {:keys [reference-file screenshot-directory]} {:keys [resize-to-contents?]}]
+(defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents?] :as target} opts]
   (when resize-to-contents?
     (resize-window-to-contents! session))
 
-  (let [data (.captureScreenshot session true) ;; hides scrollbar
+  (let [{:keys [data]} (page/capture-screenshot (:connection session) {:from-surface true}) ;; hides scrollbar
         file (append-suffix screenshot-directory (io/file reference-file) ".actual")]
     (if data
       (do (io/make-parents file)
-          (doto (io/output-stream file)
-            (.write data)
-            (.close))
+          (-> (.decode (Base64/getDecoder) data)
+              io/input-stream
+              (io/copy file))
           file)
       (log/warn "Got no data from the screenshot for" reference-file))))
 
 (defn element-exists? [selector]
-  (fn [^Session session]
-    (let [result (.matches session selector)]
-      result)))
+  (fn [session]
+    (cdp-automation/sel session selector)))
 
-(defn wait-for [^Session session pred-fn]
-  (.waitUntil session (reify Predicate
-                        (test [this session]
-                          (pred-fn session)))))
+(defn wait-for [session pred-fn]
+  (cdp-automation/wait :element false (pred-fn session)))
 
-(defn- screenshot-target [^Session session {:keys [url load-timeout ready?] :as target} opts]
-  (.navigate session "about:blank") ;; solves a weird bug navigating directly between fragment urls, i think
-  (.waitDocumentReady session (int 1000))
-
-  (.navigate session url)
-  (.waitDocumentReady session (int load-timeout))
+(defn- screenshot-target [session {:keys [url ready?] :as target} opts]
+  (cdp-automation/to session "about:blank") ;; solves a weird bug navigating directly between fragment urls, i think
+  (cdp-automation/to session url)
 
   (when ready?
     (wait-for session ready?))
@@ -253,7 +248,6 @@
                          ;; :reference-file must be supplied on each target
                          :metric               "mae" ;; see https://imagemagick.org/script/command-line-options.php#metric
                          :metric-threshold     0.01
-                         :load-timeout         60000
                          :reference-directory  "test-resources/kamera"
                          :screenshot-directory "target/kamera"
                          :normalisations       [:trim :crop]
@@ -265,16 +259,22 @@
                          :crop crop-images}
    :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
                          :timeout 2000} ;; kill imagemagick calls that exceed this time, in ms
-   :chrome-options      dcd/default-options ;; suggest you fix the width/height to make it device independant
+   :chrome-options      (cdp-launcher/default-options) ;; suggest you fix the width/height to make it device independant
    :report              {:enabled? true ;; write a report after testing
                          }
    })
 
+(defn with-chrome-session [opts f]
+  ((cdp-fixture/create-chrome-fixture opts)
+   #(let [{:keys [connection] :as automation} @cdp-automation/current-automation]
+      (cdp-core/set-current-connection! connection)
+      (f automation))))
+
 (defn run-test
   ([target opts]
-   (dcd/with-chrome-session
+   (with-chrome-session
      (:chrome-options opts)
-     (fn [session _]
+     (fn [session]
        (run-test session target opts))))
   ([session target opts]
    (let [default-target (:default-target opts)]
@@ -282,9 +282,9 @@
 
 (defn run-tests
   ([targets opts]
-   (dcd/with-chrome-session
+   (with-chrome-session
      (:chrome-options opts)
-     (fn [session _]
+     (fn [session]
        (run-tests session targets opts))))
   ([session targets opts]
    (let [results (mapv (fn [target] (run-test session target opts))
