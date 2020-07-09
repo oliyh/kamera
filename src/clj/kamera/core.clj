@@ -4,6 +4,7 @@
             [clojure.java.io :as io]
             [clojure.test :refer [testing is]]
             [clj-chrome-devtools.core :as cdp-core]
+            [clj-chrome-devtools.impl.connection :as cdp-connection]
             [clj-chrome-devtools.automation :as cdp-automation]
             [clj-chrome-devtools.automation.fixture :as cdp-fixture]
             [clj-chrome-devtools.automation.launcher :as cdp-launcher]
@@ -259,16 +260,39 @@
                          :crop crop-images}
    :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
                          :timeout 2000} ;; kill imagemagick calls that exceed this time, in ms
-   :chrome-options      (cdp-launcher/default-options) ;; suggest you fix the width/height to make it device independant
+   :chrome-options      (merge (cdp-launcher/default-options)
+                               {:idle-timeout 0
+                                :max-msg-size-mb (* 5 1024 1024)
+                                :extra-chrome-args ["--window-size=1600,900"]})
+   ;; suggest you fix the width/height to make it device independant
    :report              {:enabled? true ;; write a report after testing
                          }
    })
 
+;; copied from https://github.com/tatut/clj-chrome-devtools/blob/master/src/clj_chrome_devtools/automation/launcher.clj#L39
+;; in order to allow injection of extra command line args
+(defn launch-chrome [binary-path remote-debugging-port options]
+  (log/trace "Launching Chrome headless, binary: " binary-path
+             ", remote debugging port: " remote-debugging-port
+             ", options: " (pr-str options))
+  (let [args (remove nil?
+                     (into [binary-path
+                            (when (:headless? options) "--headless")
+                            (when (:no-sandbox? options) "--no-sandbox")
+                            "--disable-gpu"
+                            (str "--remote-debugging-port=" remote-debugging-port)]
+                           (:extra-chrome-args options)))]
+    (.exec (Runtime/getRuntime)
+           ^"[Ljava.lang.String;" (into-array String args))))
+
 (defn with-chrome-session [opts f]
-  ((cdp-fixture/create-chrome-fixture opts)
-   #(let [{:keys [connection] :as automation} @cdp-automation/current-automation]
-      (cdp-core/set-current-connection! connection)
-      (f automation))))
+  (let [make-ws-delegate cdp-connection/make-ws-client]
+    (with-redefs [cdp-connection/make-ws-client #(make-ws-delegate opts)
+                  cdp-launcher/launch-chrome launch-chrome]
+      ((cdp-fixture/create-chrome-fixture opts)
+       #(let [{:keys [connection] :as automation} @cdp-automation/current-automation]
+          (cdp-core/set-current-connection! connection)
+          (f automation))))))
 
 (defn run-test
   ([target opts]

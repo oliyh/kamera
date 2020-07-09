@@ -135,29 +135,32 @@ Each target must provide a `:url` and `:reference-file` and can override any set
 ## Options
 
 ```clojure
-{:default-target                                 ;; default options for each image comparison
-   {:metric "mae"                                ;; the imagemagick metric to use for comparison
-                                                 ;; see https://imagemagick.org/script/command-line-options.php#metric
+{:default-target                                   ;; default options for each image comparison
+   {:metric "mae"                                  ;; the imagemagick metric to use for comparison
+                                                   ;; see https://imagemagick.org/script/command-line-options.php#metric
 
-    :metric-threshold 0.01                       ;; difference metric above which comparison fails
-    :reference-directory "test-resources/kamera" ;; directory where reference images are store
-    :screenshot-directory "target/kamera"        ;; directory where screenshots and diffs should be saved
-    :ready? (fn [session] ... )                  ;; predicate that should return true when screenshot can be taken
-                                                 ;; see element-exists? as an example
-    :normalisations [:trim :crop]                ;; normalisations to apply to images before comparison, in order of application
-    :assert? true                                ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
-    :resize-to-contents? false}                  ;; resize browser window to fit contents before screenshot - true is legacy behaviour
+    :metric-threshold 0.01                         ;; difference metric above which comparison fails
+    :reference-directory "test-resources/kamera"   ;; directory where reference images are store
+    :screenshot-directory "target/kamera"          ;; directory where screenshots and diffs should be saved
+    :ready? (fn [session] ... )                    ;; predicate that should return true when screenshot can be taken
+                                                   ;; see element-exists? as an example
+    :normalisations [:trim :crop]                  ;; normalisations to apply to images before comparison, in order of application
+    :assert? true                                  ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
+    :resize-to-contents? false}                    ;; resize browser window to fit contents before screenshot - true is legacy behaviour
 
- :normalisation-fns                              ;; normalisation functions, add your own if desired
+ :normalisation-fns                                ;; normalisation functions, add your own if desired
    {:trim trim-images
     :crop crop-images}
 
  :imagemagick-options
-   {:path nil                                    ;; directory where binaries reside on linux, or executable on windows
-    :timeout 2000}                               ;; kill imagemagick calls that exceed this time, in ms
+   {:path nil                                      ;; directory where binaries reside on linux, or executable on windows
+    :timeout 2000}                                 ;; kill imagemagick calls that exceed this time, in ms
 
- :chrome-options dcd/default-options             ;; options passed to chrome, letting you turn headless on/off etc
-                                                 ;; see https://github.com/oliyh/doo-chrome-devprotocol
+ :chrome-options                                   ;; options passed to chrome, letting you turn headless on/off etc
+                                                   ;; see https://github.com/tatut/clj-chrome-devtools/blob/master/src/clj_chrome_devtools/automation/launcher.clj#L52
+   {:chrome-binary "/opt/bin/google-chrome-stable"
+    :headless? true
+    :extra-chrome-args ["--window-size=1600,900"]}
 }
 ```
 

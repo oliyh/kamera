@@ -53,7 +53,7 @@
                                         targets)})
                  (update :default-target merge {:reference-directory "example/test-resources/kamera"
                                                 :screenshot-directory target-dir
-                                                :metric-threshold 0.05}))]
+                                                :metric-threshold 0.02}))]
 
     (let [passes (atom [])
           failures (atom [])
