@@ -146,7 +146,8 @@ Each target must provide a `:url` and `:reference-file` and can override any set
                                                    ;; see element-exists? as an example
     :normalisations [:trim :crop]                  ;; normalisations to apply to images before comparison, in order of application
     :assert? true                                  ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
-    :resize-to-contents? false}                    ;; resize browser window to fit contents before screenshot - true is legacy behaviour
+    :resize-to-contents {:height? true             ;; resize browser window dimensions to fit contents before screenshot - true for both is legacy behaviour
+                         :width? false}
 
  :normalisation-fns                                ;; normalisation functions, add your own if desired
    {:trim trim-images
@@ -160,7 +161,8 @@ Each target must provide a `:url` and `:reference-file` and can override any set
                                                    ;; see https://github.com/tatut/clj-chrome-devtools/blob/master/src/clj_chrome_devtools/automation/launcher.clj#L52
    {:chrome-binary "/opt/bin/google-chrome-stable"
     :headless? true
-    :extra-chrome-args ["--window-size=1600,900"]}
+    :extra-chrome-args ["--window-size=1600,900"
+                        "--hide-scrollbars"]}
 }
 ```
 

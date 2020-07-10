@@ -11,6 +11,7 @@
             [clj-chrome-devtools.commands.page :as page]
             [clj-chrome-devtools.commands.dom :as dom]
             [clj-chrome-devtools.commands.emulation :as emulation]
+            [clj-chrome-devtools.commands.browser :as browser]
             [clojure.string :as string]
             [clojure.tools.logging :as log])
   (:import [java.io File]
@@ -168,20 +169,26 @@
   (when-let [body (cdp-automation/sel1 session "body")]
     (:model (dom/get-box-model connection body))))
 
-(defn- resize-window-to-contents! [{:keys [connection] :as session}]
-  (let [{:keys [width height]} (body-dimensions session)]
-    (emulation/set-visible-size connection {:width width :height height})
-    (emulation/set-device-metrics-override connection {:width width
-                                                       :height height
-                                                       :device-scale-factor 1.0
-                                                       :mobile false})
+(defn- browser-dimensions [{:keys [connection]}]
+  (select-keys (:bounds (browser/get-window-for-target connection {}))
+               [:width :height]))
+
+(defn- resize-window-to-contents! [{:keys [connection] :as session} {:keys [width? height?]}]
+  (let [{:keys [width height]} (body-dimensions session)
+        dimensions (cond-> (browser-dimensions session)
+                     width? (assoc :width width)
+                     height? (assoc :height height))]
+    (emulation/set-visible-size connection dimensions)
+    (emulation/set-device-metrics-override connection (merge dimensions
+                                                             {:device-scale-factor 1.0
+                                                              :mobile false}))
     (emulation/set-page-scale-factor connection {:page-scale-factor 1.0})))
 
-(defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents?] :as target} opts]
-  (when resize-to-contents?
-    (resize-window-to-contents! session))
+(defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents]} opts]
+  (when (and resize-to-contents (some resize-to-contents [:height? :width?]))
+    (resize-window-to-contents! session resize-to-contents))
 
-  (let [{:keys [data]} (page/capture-screenshot (:connection session) {:from-surface true}) ;; hides scrollbar
+  (let [{:keys [data]} (page/capture-screenshot (:connection session) {:from-surface true})
         file (append-suffix screenshot-directory (io/file reference-file) ".actual")]
     (if data
       (do (io/make-parents file)
@@ -255,7 +262,8 @@
                          :ready?               nil ;; (fn [session] ... ) a predicate that should return true when ready to take the screenshot
                                                    ;; see element-exists?
                          :assert?              true ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
-                         :resize-to-contents?  false}
+                         :resize-to-contents   {:height? true
+                                                :width? false}}
    :normalisation-fns   {:trim trim-images
                          :crop crop-images}
    :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
