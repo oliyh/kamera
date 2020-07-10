@@ -191,11 +191,11 @@ body {
         }
 
         .step-name.expanded:before {
-            content: 'remove_circle_outline';
+            content: '\e15d';
         }
 
         .step-name.contracted:before {
-            content: 'add_circle_outline';
+            content: '\e148';
         }
 
         .step-name {

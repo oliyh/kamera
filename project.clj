@@ -45,7 +45,9 @@
                                                      "resources/public/kamera.js"]
                    :plugins [[lein-sass "0.4.0"]]}
              :repl {:prep-tasks ^:replace []}
-             :build {:prep-tasks ^:replace []}}
+             :build {:prep-tasks ^:replace []}
+             :example-test {:prep-tasks ^:replace []
+                            :source-paths ["test-resources"]}}
 
   :sass {:src "resources/sass"
          :output-directory "resources/public/css"}

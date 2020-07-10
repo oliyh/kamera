@@ -11,9 +11,11 @@ if [ $? -eq 0 ]; then
     exit 1;
 else
     echo "Example project failed as expected"
+
     FILE=./target/kamera/results.edn
     if [ -f "$FILE" ]; then
-        echo "Report $FILE generated as expected";
+        echo "Report $FILE generated as expected, running assertions";
+        cd .. && lein with-profile +example-test run -m assert-example-results
     else
         echo "Report $FILE was not generated, failing";
         exit 1;

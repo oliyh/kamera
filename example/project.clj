@@ -10,7 +10,7 @@
                  [org.clojure/clojurescript "1.10.520"]
                  [reagent "0.8.1"]
                  [devcards "0.2.6"]
-                 [kamera "0.1.1-SNAPSHOT"]]
+                 [kamera "0.1.3-SNAPSHOT"]]
 
   :source-paths ["src"]
   :resource-paths ["resources"]
@@ -20,5 +20,5 @@
             "fig:min"   ["run" "-m" "figwheel.main" "-O" "advanced" "-bo" "dev"]
             "fig:test"  ["run" "-m" "figwheel.main" "-co" "test.cljs.edn" "-m" example.test-runner]}
 
-  :profiles {:dev {:dependencies [[com.bhauman/figwheel-main "0.1.9"]
+  :profiles {:dev {:dependencies [[com.bhauman/figwheel-main "0.2.9"]
                                   [com.bhauman/rebel-readline-cljs "0.1.4"]]}})
