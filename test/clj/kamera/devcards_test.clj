@@ -75,12 +75,12 @@
                    (-> @failures first :message))
           "A failure message for example.another_core_test")
 
-      (is (= 3 (count @passes)))
+      (is (= 4 (count @passes)))
       (is (= "init-hook was called" (-> @passes first :message)))
       (is (= "on-targets was called" (-> @passes second :message)))
 
       (is (re-find #"example.core_test.png has diverged from reference by 0"
-                   (-> @passes last :message))
+                   (-> @passes (nth 2) :message))
           "A zero divergence for example.core_test"))))
 
 (deftest generate-initial-screenshots-test
@@ -105,9 +105,10 @@
           (finally
             (reinstall-methods test/report original-report-methods)))
 
-        (testing "there are no failures or passes"
-          (is (= 0 (count @failures)))
-          (is (= 0 (count @passes)))))
+        (testing "there are no failures"
+          (is (= 0 (count @failures))))
+        (testing "there is one pass which is the assertion that there were some results"
+          (is (= 1 (count @passes)))))
 
       (testing "the actual files are written to the target directory"
         (let [actual-files (.list (io/file target-dir))]

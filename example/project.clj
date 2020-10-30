@@ -10,7 +10,7 @@
                  [org.clojure/clojurescript "1.10.520"]
                  [reagent "0.8.1"]
                  [devcards "0.2.6"]
-                 [kamera "0.1.3-SNAPSHOT"]]
+                 [kamera "0.1.4-SNAPSHOT"]]
 
   :source-paths ["src"]
   :resource-paths ["resources"]

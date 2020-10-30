@@ -322,6 +322,7 @@
   ([session targets opts]
    (let [results (mapv (fn [target] (run-test session target opts))
                        targets)]
+     (is (pos? (count results)) "Expected at least one test")
      (when (get-in opts [:report :enabled?])
        (report/write-report! results opts))
      results)))
