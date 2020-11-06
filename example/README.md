@@ -2,6 +2,8 @@
 
 An example project demonstrating the use of [kamera](https://github.com/oliyh/kamera).
 
+Run `lein test` to run the kamera test. The report is written to `target`.
+
 ## Development
 
 `cider-jack-in-clojurescript` and select `figwheel-main` and `dev`.
