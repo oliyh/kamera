@@ -1,7 +1,7 @@
 {:deps {org.clojure/clojure {:mvn/version "1.10.1"}
         org.clojure/clojurescript {:mvn/version "1.10.597"}
         org.clojure/tools.reader {:mvn/version "1.3.2"}
-        org.clojure/tools.logging {:mvn/version "1.3.2"}
+        org.clojure/tools.logging {:mvn/version "1.1.0"}
         me.raynes/conch {:mvn/version "0.8.0"}
         clj-chrome-devtools/clj-chrome-devtools {:mvn/version "20200423"}
         hickory/hickory {:mvn/version "0.7.1"}
