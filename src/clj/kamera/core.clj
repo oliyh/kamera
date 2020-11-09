@@ -200,7 +200,7 @@
 
 (defn element-exists? [selector]
   (fn [session]
-    (cdp-automation/sel session selector)))
+    (cdp-automation/visible session selector)))
 
 (defn wait-for [session pred-fn]
   (cdp-automation/wait :element false (pred-fn session)))
