@@ -15,4 +15,4 @@
         org.eclipse.jetty.websocket/websocket-api {:mvn/version "9.4.28.v20200408"}
         org.eclipse.jetty.websocket/websocket-client {:mvn/version "9.4.28.v20200408"}
         org.eclipse.jetty.websocket/websocket-common {:mvn/version "9.4.28.v20200408"}}
- :paths ["src" "resources"]}
+ :paths ["src/clj" "resources"]}
