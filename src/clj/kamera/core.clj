@@ -179,7 +179,7 @@
                     (format "document.querySelector(\"%s\").offsetWidth;" dom-selector))
         height (cdp-automation/evaluate
                      session
-                     (format "document.getElementById(\"%s\").offsetHeight;" dom-selector))
+                     (format "document.querySelector(\"%s\").offsetHeight;" dom-selector))
         dimensions (cond-> (browser-dimensions session)
                      width? (assoc :width width)
                      height? (assoc :height height))]
