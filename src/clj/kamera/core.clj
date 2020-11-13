@@ -175,11 +175,11 @@
 
 (defn- resize-window-to-contents! [{:keys [connection] :as session} {:keys [width? height?]} {:keys [dom-selector]}]
   (let [width (cdp-automation/evaluate
-                    session
-                    (format "document.querySelector(\"%s\").offsetWidth;" dom-selector))
+               session
+               (format "document.querySelector(\"%s\").offsetWidth;" dom-selector))
         height (cdp-automation/evaluate
-                     session
-                     (format "document.querySelector(\"%s\").offsetHeight;" dom-selector))
+                session
+                (format "document.querySelector(\"%s\").offsetHeight;" dom-selector))
         dimensions (cond-> (browser-dimensions session)
                      width? (assoc :width width)
                      height? (assoc :height height))]
