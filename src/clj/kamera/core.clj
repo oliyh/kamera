@@ -116,8 +116,9 @@
              (update :actual #(.getAbsolutePath %))))
        normalisation-chain))
 
+(def ^:private default-compare-parser #(last (re-find #"all: .* \((.*)\)$" %1)))
 (def ^:private compare-parsers
-  {"mae" #(last (re-find #"all: .* \((.*)\)$" %1))
+  {"mae" default-compare-parser
    "dssim" #(last (re-find #"all: (.*)$" %1))})
 
 (defn compare-images [^File expected
@@ -151,7 +152,7 @@
                     (.getAbsolutePath actual)
                     (.getAbsolutePath difference)]
                    opts)
-           mean-absolute-error (when-let [e ((compare-parsers metric) stderr)]
+           metric (when-let [e ((get compare-parsers metric default-compare-parser) stderr)]
                                  (read-string e))]
 
        (merge-with concat
@@ -164,8 +165,8 @@
                      {:errors [(format "Error comparing images - ImageMagick exited with code %s \n stdout: %s \n stderr: %s"
                                        exit-code stdout stderr)]})
 
-                   (if mean-absolute-error
-                     {:metric mean-absolute-error}
+                   (if metric
+                     {:metric metric}
                      {:errors [(format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
                                        stdout stderr)]}))))))
 
