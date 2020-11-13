@@ -116,6 +116,10 @@
              (update :actual #(.getAbsolutePath %))))
        normalisation-chain))
 
+(def ^:private compare-parsers
+  {"mae" #(last (re-find #"all: .* \((.*)\)$" %1))
+   "dssim" #(last (re-find #"all: (.*)$" %1))})
+
 (defn compare-images [^File expected
                       ^File actual
                       {:keys [metric screenshot-directory normalisations]}
@@ -147,7 +151,7 @@
                     (.getAbsolutePath actual)
                     (.getAbsolutePath difference)]
                    opts)
-           mean-absolute-error (when-let [e (last (re-find #"all: .* \((.*)\)" stderr))]
+           mean-absolute-error (when-let [e ((compare-parsers metric) stderr)]
                                  (read-string e))]
 
        (merge-with concat
