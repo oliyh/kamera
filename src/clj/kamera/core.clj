@@ -174,7 +174,12 @@
                [:width :height]))
 
 (defn- resize-window-to-contents! [{:keys [connection] :as session} {:keys [width? height?]}]
-  (let [{:keys [width height]} (body-dimensions session)
+  (let [width (cdp-automation/evaluate
+                    session
+                    "document.getElementById(\"com-rigsomelight-devcards-main\").offsetWidth;")
+        height (cdp-automation/evaluate
+                     session
+                     "document.getElementById(\"com-rigsomelight-devcards-main\").offsetHeight;")
         dimensions (cond-> (browser-dimensions session)
                      width? (assoc :width width)
                      height? (assoc :height height))]
