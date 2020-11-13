@@ -173,13 +173,13 @@
   (select-keys (:bounds (browser/get-window-for-target connection {}))
                [:width :height]))
 
-(defn- resize-window-to-contents! [{:keys [connection] :as session} {:keys [width? height?]}]
+(defn- resize-window-to-contents! [{:keys [connection] :as session} {:keys [width? height?]} {:keys [dom-selector]}]
   (let [width (cdp-automation/evaluate
                     session
-                    "document.getElementById(\"com-rigsomelight-devcards-main\").offsetWidth;")
+                    (format "document.querySelector(\"%s\").offsetWidth;" dom-selector))
         height (cdp-automation/evaluate
                      session
-                     "document.getElementById(\"com-rigsomelight-devcards-main\").offsetHeight;")
+                     (format "document.getElementById(\"%s\").offsetHeight;" dom-selector))
         dimensions (cond-> (browser-dimensions session)
                      width? (assoc :width width)
                      height? (assoc :height height))]
@@ -189,9 +189,9 @@
                                                               :mobile false}))
     (emulation/set-page-scale-factor connection {:page-scale-factor 1.0})))
 
-(defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents]} opts]
+(defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents] :as target} opts]
   (when (and resize-to-contents (some resize-to-contents [:height? :width?]))
-    (resize-window-to-contents! session resize-to-contents))
+    (resize-window-to-contents! session resize-to-contents target))
 
   (let [{:keys [data]} (page/capture-screenshot (:connection session) {:from-surface true})
         file (append-suffix screenshot-directory (io/file reference-file) ".actual")]
@@ -221,7 +221,7 @@
 
   (Thread/sleep 500) ;; small timeout for any js rendering
 
-  (take-screenshot session target opts))
+  (take-screenshot session target))
 
 (defn test-target [session {:keys [url reference-directory reference-file screenshot-directory metric-threshold assert?] :as target} opts]
   (testing url
@@ -263,6 +263,7 @@
                          ;; :reference-file must be supplied on each target
                          :metric               "mae" ;; see https://imagemagick.org/script/command-line-options.php#metric
                          :metric-threshold     0.01
+                         :dom-selector         "body"
                          :reference-directory  "test-resources/kamera"
                          :screenshot-directory "target/kamera"
                          :normalisations       [:trim :crop]
