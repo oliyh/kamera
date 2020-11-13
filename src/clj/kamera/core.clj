@@ -221,7 +221,7 @@
 
   (Thread/sleep 500) ;; small timeout for any js rendering
 
-  (take-screenshot session target))
+  (take-screenshot session target opts))
 
 (defn test-target [session {:keys [url reference-directory reference-file screenshot-directory metric-threshold assert?] :as target} opts]
   (testing url
