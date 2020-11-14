@@ -116,10 +116,10 @@
              (update :actual #(.getAbsolutePath %))))
        normalisation-chain))
 
-(def ^:private default-compare-parser #(last (re-find #"all: .* \((.*)\)$" %1)))
+(def ^:private default-compare-parser #(last (re-find #"all: .* \((.*)\)" %1)))
 (def ^:private compare-parsers
   {"mae" default-compare-parser
-   "dssim" #(last (re-find #"all: (.*)$" %1))})
+   "dssim" #(last (re-find #"all: (.*)" %1))})
 
 (defn compare-images [^File expected
                       ^File actual
