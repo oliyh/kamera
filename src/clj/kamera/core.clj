@@ -189,7 +189,7 @@
                                                               :mobile false}))
     (emulation/set-page-scale-factor connection {:page-scale-factor 1.0})))
 
-(defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents] :as target} opts]
+(defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents]} opts]
   (when (and resize-to-contents (some resize-to-contents [:height? :width?]))
     (resize-window-to-contents! session resize-to-contents))
 
@@ -270,8 +270,8 @@
                                                    ;; see element-exists?
                          :assert?              true ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
                          :resize-to-contents   {:height? true
-                                                :dom-selector "body"
-                                                :width? false}}
+                                                :width? false
+                                                :dom-selector "body"}}
    :normalisation-fns   {:trim trim-images
                          :crop crop-images}
    :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
