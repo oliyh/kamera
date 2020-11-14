@@ -173,7 +173,7 @@
   (select-keys (:bounds (browser/get-window-for-target connection {}))
                [:width :height]))
 
-(defn- resize-window-to-contents! [{:keys [connection] :as session} {:keys [width? height?]} {:keys [dom-selector]}]
+(defn- resize-window-to-contents! [{:keys [connection] :as session} {:keys [width? height? dom-selector]}]
   (let [width (cdp-automation/evaluate
                session
                (format "document.querySelector(\"%s\").offsetWidth;" dom-selector))
@@ -191,7 +191,7 @@
 
 (defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents] :as target} opts]
   (when (and resize-to-contents (some resize-to-contents [:height? :width?]))
-    (resize-window-to-contents! session resize-to-contents target))
+    (resize-window-to-contents! session resize-to-contents))
 
   (let [{:keys [data]} (page/capture-screenshot (:connection session) {:from-surface true})
         file (append-suffix screenshot-directory (io/file reference-file) ".actual")]
@@ -263,7 +263,6 @@
                          ;; :reference-file must be supplied on each target
                          :metric               "mae" ;; see https://imagemagick.org/script/command-line-options.php#metric
                          :metric-threshold     0.01
-                         :dom-selector         "body"
                          :reference-directory  "test-resources/kamera"
                          :screenshot-directory "target/kamera"
                          :normalisations       [:trim :crop]
@@ -271,6 +270,7 @@
                                                    ;; see element-exists?
                          :assert?              true ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
                          :resize-to-contents   {:height? true
+                                                :dom-selector "body"
                                                 :width? false}}
    :normalisation-fns   {:trim trim-images
                          :crop crop-images}
@@ -311,6 +311,17 @@
           (cdp-core/set-current-connection! connection)
           (f automation))))))
 
+(defn deep-merge-with
+  "Recursively merges maps. Applies function f when we have duplicate keys."
+  [f & maps]
+  (letfn [(m [& xs]
+            (if (some #(and (map? %) (not (record? %))) xs)
+              (apply merge-with m xs)
+              (apply f xs)))]
+    (reduce m maps)))
+
+(def deep-merge (partial deep-merge-with last))
+
 (defn run-test
   ([target opts]
    (with-chrome-session
@@ -319,7 +330,7 @@
        (run-test session target opts))))
   ([session target opts]
    (let [default-target (:default-target opts)]
-     (test-target session (merge default-target target) opts))))
+     (test-target session (deep-merge default-target target) opts))))
 
 (defn run-tests
   ([targets opts]
