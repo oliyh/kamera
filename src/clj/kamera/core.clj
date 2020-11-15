@@ -317,7 +317,7 @@
   (letfn [(m [& xs]
             (if (some #(and (map? %) (not (record? %))) xs)
               (apply merge-with m xs)
-              (apply f xs)))]
+              (f xs)))]
     (reduce m maps)))
 
 (def deep-merge (partial deep-merge-with last))
