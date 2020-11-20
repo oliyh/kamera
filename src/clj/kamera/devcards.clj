@@ -100,6 +100,7 @@
      (let [target-urls (find-test-urls session)
            targets (map (fn [target-url]
                           {:url (str devcards-url target-url)
+                           :resize-to-contents {:dom-selector "#com-rigsomelight-devcards-main"}
                            :reference-file (str (subs target-url 3) ".png")})
                         target-urls)
            targets (if on-targets

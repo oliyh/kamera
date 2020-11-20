@@ -178,8 +178,13 @@
   (select-keys (:bounds (browser/get-window-for-target connection {}))
                [:width :height]))
 
-(defn- resize-window-to-contents! [{:keys [connection] :as session} {:keys [width? height?]}]
-  (let [{:keys [width height]} (body-dimensions session)
+(defn- resize-window-to-contents! [{:keys [connection] :as session} {:keys [width? height? dom-selector]}]
+  (let [width (cdp-automation/evaluate
+               session
+               (format "document.querySelector(\"%s\").offsetWidth;" dom-selector))
+        height (cdp-automation/evaluate
+                session
+                (format "document.querySelector(\"%s\").offsetHeight;" dom-selector))
         dimensions (cond-> (browser-dimensions session)
                      width? (assoc :width width)
                      height? (assoc :height height))]
@@ -270,7 +275,8 @@
                                                    ;; see element-exists?
                          :assert?              true ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
                          :resize-to-contents   {:height? true
-                                                :width? false}}
+                                                :width? false
+                                                :dom-selector "body"}}
    :normalisation-fns   {:trim trim-images
                          :crop crop-images}
    :imagemagick-options {:path nil      ;; directory where binaries reside on linux, or executable on windows
@@ -310,6 +316,17 @@
           (cdp-core/set-current-connection! connection)
           (f automation))))))
 
+(defn deep-merge-with
+  "Recursively merges maps. Applies function f when we have duplicate keys."
+  [f & maps]
+  (letfn [(m [& xs]
+            (if (some #(and (map? %) (not (record? %))) xs)
+              (apply merge-with m xs)
+              (f xs)))]
+    (reduce m maps)))
+
+(def deep-merge (partial deep-merge-with last))
+
 (defn run-test
   ([target opts]
    (with-chrome-session
@@ -318,7 +335,7 @@
        (run-test session target opts))))
   ([session target opts]
    (let [default-target (:default-target opts)]
-     (test-target session (merge default-target target) opts))))
+     (test-target session (deep-merge default-target target) opts))))
 
 (defn run-tests
   ([targets opts]
