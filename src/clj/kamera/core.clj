@@ -9,7 +9,6 @@
             [clj-chrome-devtools.automation.fixture :as cdp-fixture]
             [clj-chrome-devtools.automation.launcher :as cdp-launcher]
             [clj-chrome-devtools.commands.page :as page]
-            [clj-chrome-devtools.commands.dom :as dom]
             [clj-chrome-devtools.commands.emulation :as emulation]
             [clj-chrome-devtools.commands.browser :as browser]
             [clojure.string :as string]
@@ -170,10 +169,6 @@
                      {:errors [(format "Could not parse ImageMagick output\n stdout: %s \n stderr: %s"
                                        stdout stderr)]}))))))
 
-(defn- body-dimensions [{:keys [connection] :as session}]
-  (when-let [body (cdp-automation/sel1 session "body")]
-    (:model (dom/get-box-model connection body))))
-
 (defn- browser-dimensions [{:keys [connection]}]
   (select-keys (:bounds (browser/get-window-for-target connection {}))
                [:width :height]))
@@ -194,7 +189,7 @@
                                                               :mobile false}))
     (emulation/set-page-scale-factor connection {:page-scale-factor 1.0})))
 
-(defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents]} opts]
+(defn- take-screenshot [session {:keys [reference-file screenshot-directory resize-to-contents]} _opts]
   (when (and resize-to-contents (some resize-to-contents [:height? :width?]))
     (resize-window-to-contents! session resize-to-contents))
 

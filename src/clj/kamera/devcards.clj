@@ -38,7 +38,7 @@
         (let [connect-url (get-in config [:options :closure-defines 'figwheel.repl/connect-url])]
           (assert connect-url "Could not detect a url to connect to")
           connect-url)
-        (catch Exception e
+        (catch Exception _e
           (fig-api/stop build-id)
           nil)))))
 
