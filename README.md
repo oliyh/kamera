@@ -147,7 +147,8 @@ Each target must provide a `:url` and `:reference-file` and can override any set
     :normalisations [:trim :crop]                  ;; normalisations to apply to images before comparison, in order of application
     :assert? true                                  ;; runs a clojure.test assert on the expected/actual when true, makes no assertions when false
     :resize-to-contents {:height? true             ;; resize browser window dimensions to fit contents before screenshot - true for both is legacy behaviour
-                         :width? false}
+                         :width? false
+                         :dom-selector "body"}     ;; which dom element dimensions are used for the resize
 
  :normalisation-fns                                ;; normalisation functions, add your own if desired
    {:trim trim-images
